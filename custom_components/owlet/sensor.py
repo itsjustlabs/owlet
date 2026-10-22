@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -13,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -97,6 +99,13 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         entity_registry_enabled_default=False,
         available_during_charging=False,
     ),
+    OwletSensorEntityDescription(
+        key="last_updated",
+        translation_key="last_updated",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        available_during_charging=True,
+    ),
 )
 
 
@@ -145,13 +154,16 @@ class OwletSensor(OwletBaseEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return super().available and (
-            not self.sock.properties["charging"]
-            or self.entity_description.available_during_charging
+        if self.entity_description.available_during_charging:
+            return super().available
+        return (
+            super().available
+            and not self.sock.properties["charging"]
+            and not self.coordinator.vitals_stale
         )
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType | datetime:
         """Return sensor value."""
 
         return self.sock.properties[self.entity_description.key]

@@ -65,6 +65,9 @@
             },
             "sock_off": {
                 "name": "Sock off"
+            },
+            "stale_data": {
+                "name": "Readings stale"
             }
         },
         "sensor": {
@@ -103,6 +106,9 @@
                     "light_sleep": "Light sleep",
                     "unknown": "Unknown"
                 }
+            },
+            "last_updated": {
+                "name": "Last updated"
             }
         },
         "switch": {

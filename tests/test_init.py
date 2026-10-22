@@ -51,7 +51,7 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
 
     entities = er.async_entries_for_device(entity_registry, device_entry.id)
 
-    assert len(entities) == 19
+    assert len(entities) == 21
 
     await hass.config_entries.async_unload(entry.entry_id)
 

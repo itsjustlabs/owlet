@@ -1,3 +1,4 @@
+import datetime
 from typing import Literal, TypedDict
 
 PropertyKey = Literal[
@@ -74,7 +75,7 @@ class Properties(TypedDict, total=False):
     monitoring_start_time: int
     base_battery_status: int
     hardware_version: str
-    last_updated: str
+    last_updated: datetime.datetime
 
 
 PROPERTIES: dict[type, dict[PropertyKey, str]] = {

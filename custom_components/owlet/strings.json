@@ -75,6 +75,9 @@
       },
       "awake": {
         "name": "Awake"
+      },
+      "stale_data": {
+        "name": "Readings stale"
       }
     },
     "sensor": {
@@ -113,6 +116,9 @@
       },
       "movementbucket": {
         "name": "Movement bucket"
+      },
+      "last_updated": {
+        "name": "Last updated"
       }
     },
     "switch": {

@@ -215,7 +215,7 @@ class Sock:
                 properties["last_updated"] = datetime.datetime.strptime(
                     self._raw_properties["REAL_TIME_VITALS"]["data_updated_at"],
                     "%Y-%m-%dT%H:%M:%SZ",
-                ).strftime("%Y/%m/%d %H:%M:%S")
+                ).replace(tzinfo=datetime.timezone.utc)
             except KeyError:
                 pass
 

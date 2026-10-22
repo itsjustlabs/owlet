@@ -112,6 +112,8 @@ async def async_setup_entry(
 
         if OwletAwakeSensor.entity_description.key in coordinator.sock.properties:
             sensors.append(OwletAwakeSensor(coordinator))
+        if "last_updated" in coordinator.sock.properties:
+            sensors.append(OwletStaleDataSensor(coordinator))
 
     async_add_entities(sensors)
 
@@ -162,6 +164,34 @@ class OwletAwakeSensor(OwletBinarySensor):
         super().__init__(coordinator, self.entity_description)
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return super().available and not self.coordinator.vitals_stale
+
+    @property
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
         return self.sock.properties[self.entity_description.key] not in [8, 15]
+
+
+class OwletStaleDataSensor(OwletBinarySensor):
+    """On when Owlet has stopped updating the sock's live readings."""
+
+    entity_description = OwletBinarySensorEntityDescription(
+        key="stale_data",
+        translation_key="stale_data",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        available_during_charging=True,
+    )
+
+    def __init__(
+        self,
+        coordinator: OwletCoordinator,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, self.entity_description)
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the readings are stale."""
+        return self.coordinator.vitals_stale
