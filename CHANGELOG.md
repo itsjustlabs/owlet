@@ -1,7 +1,7 @@
 # Changelog
 
 <!--next-version-placeholder-->
-## 2026.10.0 (unreleased)
+## 2026.10.0 (2026-10-22)
 First release from itsjustlabs/owlet.
 ### Feature
 * "Readings stale" binary sensor and "Last updated" sensor. Live vitals show as unavailable instead of repeating frozen values when the base station stops relaying data.
