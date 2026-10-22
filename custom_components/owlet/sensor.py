@@ -10,7 +10,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
@@ -18,11 +17,11 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import DOMAIN, SLEEP_STATES
-from .coordinator import OwletCoordinator
+from .const import SLEEP_STATES
+from .coordinator import OwletConfigEntry, OwletCoordinator
 from .entity import OwletBaseEntity
 
 
@@ -103,14 +102,12 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: OwletConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the owlet sensors from config entry."""
 
-    coordinators: list[OwletCoordinator] = list(
-        hass.data[DOMAIN][config_entry.entry_id].values()
-    )
+    coordinators = config_entry.runtime_data.values()
 
     sensors = []
 
@@ -181,7 +178,7 @@ class OwletSleepSensor(OwletSensor):
     @property
     def native_value(self) -> StateType:
         """Return sensor value."""
-        return SLEEP_STATES[self.sock.properties["sleep_state"]]
+        return SLEEP_STATES.get(self.sock.properties["sleep_state"], "unknown")
 
 
 class OwletOxygenAverageSensor(OwletSensor):

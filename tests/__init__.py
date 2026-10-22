@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import patch
 
-from homeassistant.components.owlet.const import (
+from custom_components.owlet.const import (
     CONF_OWLET_EXPIRY,
     CONF_OWLET_REFRESH,
     DOMAIN,
@@ -18,7 +19,14 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from tests.common import MockConfigEntry, load_fixture
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def load_fixture(filename: str, integration: str | None = None) -> str:
+    """Load a JSON fixture from tests/fixtures."""
+    return (FIXTURES / filename).read_text()
 
 
 async def async_init_integration(
@@ -46,12 +54,12 @@ async def async_init_integration(
 
     if not skip_setup:
         with patch(
-            "homeassistant.components.owlet.OwletAPI.get_properties",
+            "custom_components.owlet.OwletAPI.get_properties",
             return_value=json.loads(load_fixture(properties_fixture, "owlet")),
         ), patch(
-            "homeassistant.components.owlet.OwletAPI.authenticate", return_value=None
+            "custom_components.owlet.OwletAPI.authenticate", return_value=None
         ), patch(
-            "homeassistant.components.owlet.OwletAPI.get_devices",
+            "custom_components.owlet.OwletAPI.get_devices",
             return_value=json.loads(load_fixture(devices_fixture, "owlet")),
         ):
             await hass.config_entries.async_setup(entry.entry_id)

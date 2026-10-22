@@ -1206,6 +1206,5 @@
             "ack_enabled": false,
             "retention_days": 30
         }
-    },
-    "tokens": ""
+    }
 }

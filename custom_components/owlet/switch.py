@@ -7,16 +7,13 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from .pyowletapi.sock import Sock
-
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import OwletCoordinator
+from .coordinator import OwletConfigEntry, OwletCoordinator
 from .entity import OwletBaseEntity
+from .pyowletapi.sock import Sock
 
 SCAN_INTERVAL = timedelta(seconds=5)
 PARALLEL_UPDATES = 0
@@ -44,11 +41,11 @@ SWITCHES: tuple[OwletSwitchEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: OwletConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Owlet switch based on a config entry."""
-    coordinators: OwletCoordinator = hass.data[DOMAIN][config_entry.entry_id].values()
+    coordinators = config_entry.runtime_data.values()
 
     switches = []
     for coordinator in coordinators:
@@ -88,7 +85,9 @@ class OwletBaseSwitch(OwletBaseEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.entity_description.turn_on_fn(self.sock)(True)
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.entity_description.turn_off_fn(self.sock)(False)
+        await self.coordinator.async_request_refresh()

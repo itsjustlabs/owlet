@@ -1,28 +1,36 @@
 """Test Owlet init."""
 from __future__ import annotations
 
+from datetime import timedelta
+import json
 from unittest.mock import patch
 
-from pyowletapi.exceptions import (
+from custom_components.owlet.pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
     OwletDevicesError,
     OwletError,
 )
 
-from homeassistant.components.owlet.const import (
+from custom_components.owlet.const import (
     CONF_OWLET_EXPIRY,
     CONF_OWLET_REFRESH,
     DOMAIN,
 )
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_API_TOKEN, CONF_REGION, CONF_USERNAME, Platform
+from homeassistant.const import (
+    CONF_API_TOKEN,
+    CONF_REGION,
+    CONF_SCAN_INTERVAL,
+    CONF_USERNAME,
+    Platform,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
-from . import async_init_integration
+from . import async_init_integration, load_fixture
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
 
 
 async def test_async_setup_entry(hass: HomeAssistant) -> None:
@@ -37,15 +45,15 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
         config_entry_id=entry.entry_id, identifiers={(DOMAIN, "SERIAL_NUMBER")}
     )
 
-    assert device_entry.name == "Owlet Baby Care Sock"
+    assert device_entry.name == "Owlet Sock SERIAL_NUMBER"
 
     entity_registry = er.async_get(hass)
 
     entities = er.async_entries_for_device(entity_registry, device_entry.id)
 
-    assert len(entities) == 18
+    assert len(entities) == 19
 
-    await entry.async_unload(hass)
+    await hass.config_entries.async_unload(entry.entry_id)
 
     assert entry.state == ConfigEntryState.NOT_LOADED
 
@@ -66,7 +74,7 @@ async def test_async_setup_entry_new_tokens(hass: HomeAssistant) -> None:
 
     assert entry.state == ConfigEntryState.LOADED
 
-    await entry.async_unload(hass)
+    await hass.config_entries.async_unload(entry.entry_id)
 
     assert entry.state == ConfigEntryState.NOT_LOADED
 
@@ -76,7 +84,7 @@ async def test_async_setup_entry_auth_error(hass: HomeAssistant) -> None:
     entry = await async_init_integration(hass, skip_setup=True)
 
     with patch(
-        "homeassistant.components.owlet.OwletAPI.authenticate",
+        "custom_components.owlet.OwletAPI.authenticate",
         side_effect=OwletAuthenticationError(),
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -84,7 +92,7 @@ async def test_async_setup_entry_auth_error(hass: HomeAssistant) -> None:
 
         assert entry.state == ConfigEntryState.SETUP_ERROR
 
-        await entry.async_unload(hass)
+        await hass.config_entries.async_unload(entry.entry_id)
 
 
 async def test_async_setup_entry_connection_error(hass: HomeAssistant) -> None:
@@ -92,7 +100,7 @@ async def test_async_setup_entry_connection_error(hass: HomeAssistant) -> None:
     entry = await async_init_integration(hass, skip_setup=True)
 
     with patch(
-        "homeassistant.components.owlet.OwletAPI.authenticate",
+        "custom_components.owlet.OwletAPI.authenticate",
         side_effect=OwletConnectionError(),
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -100,7 +108,7 @@ async def test_async_setup_entry_connection_error(hass: HomeAssistant) -> None:
 
         assert entry.state == ConfigEntryState.SETUP_RETRY
 
-        await entry.async_unload(hass)
+        await hass.config_entries.async_unload(entry.entry_id)
 
 
 async def test_async_setup_entry_devices_error(hass: HomeAssistant) -> None:
@@ -108,16 +116,16 @@ async def test_async_setup_entry_devices_error(hass: HomeAssistant) -> None:
     entry = await async_init_integration(hass, skip_setup=True)
 
     with patch(
-        "homeassistant.components.owlet.OwletAPI.authenticate", return_value=None
+        "custom_components.owlet.OwletAPI.authenticate", return_value=None
     ), patch(
-        "homeassistant.components.owlet.OwletAPI.get_devices",
+        "custom_components.owlet.OwletAPI.get_devices",
         side_effect=OwletDevicesError(),
     ):
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
         assert entry.state == ConfigEntryState.SETUP_ERROR
-        await entry.async_unload(hass)
+        await hass.config_entries.async_unload(entry.entry_id)
 
 
 async def test_async_setup_entry_error(hass: HomeAssistant) -> None:
@@ -125,7 +133,7 @@ async def test_async_setup_entry_error(hass: HomeAssistant) -> None:
     entry = await async_init_integration(hass, skip_setup=True)
 
     with patch(
-        "homeassistant.components.owlet.OwletAPI.authenticate",
+        "custom_components.owlet.OwletAPI.authenticate",
         side_effect=OwletError(),
     ):
         await hass.config_entries.async_setup(entry.entry_id)
@@ -133,4 +141,29 @@ async def test_async_setup_entry_error(hass: HomeAssistant) -> None:
 
         assert entry.state == ConfigEntryState.SETUP_ERROR
 
-        await entry.async_unload(hass)
+        await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_options_update_reloads_entry(hass: HomeAssistant) -> None:
+    """Test changing the scan interval applies without restarting HA."""
+    entry = await async_init_integration(hass)
+
+    with patch(
+        "custom_components.owlet.OwletAPI.get_properties",
+        return_value=json.loads(
+            load_fixture("update_properties_charging.json", "owlet")
+        ),
+    ), patch(
+        "custom_components.owlet.OwletAPI.authenticate", return_value=None
+    ), patch(
+        "custom_components.owlet.OwletAPI.get_devices",
+        return_value=json.loads(load_fixture("get_devices.json", "owlet")),
+    ):
+        hass.config_entries.async_update_entry(
+            entry, options={CONF_SCAN_INTERVAL: 30}
+        )
+        await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.LOADED
+    coordinator = entry.runtime_data["SERIAL_NUMBER"]
+    assert coordinator.update_interval == timedelta(seconds=30)

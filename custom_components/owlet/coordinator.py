@@ -4,6 +4,13 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_USERNAME
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .const import DOMAIN
 from .pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
@@ -11,32 +18,28 @@ from .pyowletapi.exceptions import (
 )
 from .pyowletapi.sock import Sock
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_EMAIL
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
-from .const import DOMAIN
-
 _LOGGER = logging.getLogger(__name__)
 
+type OwletConfigEntry = ConfigEntry[dict[str, OwletCoordinator]]
 
-class OwletCoordinator(DataUpdateCoordinator):
+
+class OwletCoordinator(DataUpdateCoordinator[None]):
     """Coordinator is responsible for querying the device at a specified route."""
 
+    config_entry: OwletConfigEntry
+
     def __init__(
-        self, hass: HomeAssistant, sock: Sock, interval, entry: ConfigEntry
+        self, hass: HomeAssistant, sock: Sock, interval: int, entry: OwletConfigEntry
     ) -> None:
         """Initialise a custom coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=interval),
         )
         self.sock = sock
-        self.config_entry: ConfigEntry = entry
 
     async def _async_update_data(self) -> None:
         """Fetch the data from the device."""
@@ -49,7 +52,7 @@ class OwletCoordinator(DataUpdateCoordinator):
                 )
         except OwletAuthenticationError as err:
             raise ConfigEntryAuthFailed(
-                f"Authentication failed for {self.config_entry.data[CONF_EMAIL]}"
+                f"Authentication failed for {self.config_entry.data[CONF_USERNAME]}"
             ) from err
         except (OwletError, OwletConnectionError) as err:
             raise UpdateFailed(err) from err
