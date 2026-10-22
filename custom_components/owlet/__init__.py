@@ -5,15 +5,15 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from pyowletapi.api import OwletAPI
-from pyowletapi.exceptions import (
+from .pyowletapi.api import OwletAPI
+from .pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
     OwletDevicesError,
     OwletEmailError,
     OwletPasswordError,
 )
-from pyowletapi.sock import Sock
+from .pyowletapi.sock import Sock
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (

@@ -4,12 +4,12 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from pyowletapi.exceptions import (
+from .pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
     OwletError,
 )
-from pyowletapi.sock import Sock
+from .pyowletapi.sock import Sock
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL
