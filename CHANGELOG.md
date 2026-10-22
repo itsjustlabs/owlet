@@ -1,6 +1,19 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## 2026.10.0 (unreleased)
+First release from itsjustlabs/owlet.
+### Feature
+* "Readings stale" binary sensor and "Last updated" sensor. Live vitals show as unavailable instead of repeating frozen values when the base station stops relaying data.
+* pyowletapi is bundled in the integration.
+### Fix
+* Setup screen failed with "Invalid handler specified" because of exceptions removed from pyowletapi.
+* Options flow works on Home Assistant 2025.12 and later; changing the scan interval no longer needs a restart.
+* An expired login now opens the re-login prompt instead of failing with a KeyError.
+* Each poll makes 2 requests instead of 4. Tokens are refreshed only when expired or rejected.
+* Requests time out after 20 seconds, and network errors are retried instead of failing setup.
+* Requires Home Assistant 2025.2 or later.
+
 ## 2025.4.3 (2025-04-15)
 ### Fix
 * Changes to how the sensors are stored to solve the issue where only one device is added, thanks [`@MarjovanLier`](https://github.com/MarjovanLier). ([`1244bff`](https://github.com/ryanbdclark/owlet/commit/1244bffcb48d7337a9d7a0da518959fe4b31a230))
