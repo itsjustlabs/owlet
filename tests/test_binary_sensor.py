@@ -12,7 +12,7 @@ async def test_sensors_asleep(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_asleep.json"
     )
 
-    assert len(hass.states.async_all("binary_sensor")) == 11
+    assert len(hass.states.async_all("binary_sensor")) == 13
 
     assert hass.states.get("binary_sensor.owlet_sock_serial_number_charging").state == "off"
     assert (
@@ -57,7 +57,7 @@ async def test_sensors_awake(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_awake.json"
     )
 
-    assert len(hass.states.async_all("binary_sensor")) == 11
+    assert len(hass.states.async_all("binary_sensor")) == 13
 
     assert hass.states.get("binary_sensor.owlet_sock_serial_number_charging").state == "off"
     assert (
@@ -102,7 +102,7 @@ async def test_sensors_charging(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_charging.json"
     )
 
-    assert len(hass.states.async_all("binary_sensor")) == 11
+    assert len(hass.states.async_all("binary_sensor")) == 13
 
     assert hass.states.get("binary_sensor.owlet_sock_serial_number_charging").state == "on"
     assert (
@@ -146,7 +146,7 @@ async def test_sensors_charging(hass: HomeAssistant) -> None:
 async def test_sensors_v2(hass: HomeAssistant) -> None:
     """Test sensor values."""
     await async_init_integration(hass, properties_fixture="update_properties_v2.json")
-    assert len(hass.states.async_all("binary_sensor")) == 9
+    assert len(hass.states.async_all("binary_sensor")) == 10
 
     assert hass.states.get("binary_sensor.owlet_sock_serial_number_charging").state == "off"
     assert (
