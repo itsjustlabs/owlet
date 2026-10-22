@@ -100,6 +100,13 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         available_during_charging=False,
     ),
     OwletSensorEntityDescription(
+        key="firmware_update_status",
+        translation_key="firmware_update_status",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:update",
+        available_during_charging=True,
+    ),
+    OwletSensorEntityDescription(
         key="last_updated",
         translation_key="last_updated",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -158,7 +165,7 @@ class OwletSensor(OwletBaseEntity, SensorEntity):
             return super().available
         return (
             super().available
-            and not self.sock.properties["charging"]
+            and not self.sock.properties.get("charging")
             and not self.coordinator.vitals_stale
         )
 
@@ -166,7 +173,7 @@ class OwletSensor(OwletBaseEntity, SensorEntity):
     def native_value(self) -> StateType | datetime:
         """Return sensor value."""
 
-        return self.sock.properties[self.entity_description.key]
+        return self.sock.properties.get(self.entity_description.key)
 
 
 class OwletSleepSensor(OwletSensor):
@@ -190,7 +197,7 @@ class OwletSleepSensor(OwletSensor):
     @property
     def native_value(self) -> StateType:
         """Return sensor value."""
-        return SLEEP_STATES.get(self.sock.properties["sleep_state"], "unknown")
+        return SLEEP_STATES.get(self.sock.properties.get("sleep_state"), "unknown")
 
 
 class OwletOxygenAverageSensor(OwletSensor):
@@ -215,14 +222,6 @@ class OwletOxygenAverageSensor(OwletSensor):
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return (
-            super().available
-            and (
-                not self.sock.properties["charging"]
-                or self.entity_description.available_during_charging
-            )
-            and (
-                self.sock.properties["oxygen_10_av"] >= 0
-                and self.sock.properties["oxygen_10_av"] <= 100
-            )
-        )
+        # Owlet reports 255 until it has 10 minutes of readings.
+        average = self.sock.properties.get("oxygen_10_av")
+        return super().available and average is not None and 0 <= average <= 100

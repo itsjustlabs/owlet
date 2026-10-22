@@ -73,14 +73,14 @@ class OwletBaseSwitch(OwletBaseEntity, SwitchEntity):
     def available(self) -> bool:
         """Return if entity is available."""
         return super().available and (
-            not self.sock.properties["charging"]
+            not self.sock.properties.get("charging")
             or self.entity_description.available_during_charging
         )
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return if switch is on or off."""
-        return self.sock.properties[self.entity_description.key]
+        return self.sock.properties.get(self.entity_description.key)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""

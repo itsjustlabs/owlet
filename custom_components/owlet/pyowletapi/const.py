@@ -8,7 +8,7 @@ PropertyKey = Literal[
     "high_heart_rate_alert",
     "low_oxygen_alert",
     "ppg_log_file",
-    "firmware_update_available",
+    "firmware_update_status",
     "lost_power_alert",
     "sock_disconnected",
     "sock_off",
@@ -49,7 +49,7 @@ class Properties(TypedDict, total=False):
     high_heart_rate_alert: bool
     low_oxygen_alert: bool
     ppg_log_file: bool
-    firmware_update_available: bool
+    firmware_update_status: str
     lost_power_alert: bool
     sock_disconnected: bool
     sock_off: bool
@@ -86,7 +86,6 @@ PROPERTIES: dict[type, dict[PropertyKey, str]] = {
         "high_heart_rate_alert": "HIGH_HR_ALRT",
         "low_oxygen_alert": "LOW_OX_ALRT",
         "ppg_log_file": "PPG_LOG_FILE",
-        "firmware_update_available": "FW_UPDATE_STATUS",
         "lost_power_alert": "LOST_POWER_ALRT",
         "sock_disconnected": "SOCK_DISCON_ALRT",
         "sock_off": "SOCK_OFF",
