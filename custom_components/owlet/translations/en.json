@@ -155,5 +155,11 @@
                 "title": "Configure options for Owlet"
             }
         }
+    },
+    "issues": {
+        "stale_data": {
+            "title": "Owlet readings stopped updating",
+            "description": "{name} has not sent a new reading since {last_updated}, although it is off the charger and the base station is on. Heart rate and oxygen show as unavailable until readings resume.\n\nRestarting the base station (unplug it for a few seconds) usually fixes this. This warning clears by itself when readings come back."
+        }
     }
 }

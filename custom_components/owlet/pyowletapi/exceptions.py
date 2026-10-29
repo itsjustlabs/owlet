@@ -6,6 +6,14 @@ class OwletConnectionError(OwletError):
     """When a connection error occurs."""
 
 
+class OwletRateLimitError(OwletConnectionError):
+    """When Owlet is rate limiting or failing and requests are paused."""
+
+    def __init__(self, message: str, retry_after: float) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 class OwletAuthenticationError(OwletError):
     """When login details are incorrect."""
 

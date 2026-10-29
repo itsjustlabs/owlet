@@ -119,5 +119,11 @@
                 "name": "Station de base allumée"
             }
         }
+    },
+    "issues": {
+        "stale_data": {
+            "title": "Les mesures Owlet ne sont plus mises à jour",
+            "description": "{name} n'a envoyé aucune nouvelle mesure depuis {last_updated}, alors qu'elle n'est pas en charge et que la station de base est allumée. La fréquence cardiaque et l'oxygène restent indisponibles jusqu'au retour des mesures.\n\nRedémarrer la station de base (la débrancher quelques secondes) règle généralement le problème. Cet avertissement disparaît de lui-même lorsque les mesures reprennent."
+        }
     }
 }
