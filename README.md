@@ -31,7 +31,7 @@ This integration provides the following entities:
 
 - Binary sensors - charging status, awake, sock off, high heart rate alert, low heart rate alert, high oxygen alert, low oxygen alert, critical oxygen alert, low battery alert, critical battery alert, lost power alert, and sock disconnected alert.
 - Sensors - battery level, oxygen saturation, oxygen saturation 10 minute average, heart rate, battery time remaining, signal strength, skin temperature, sleep state, last updated, and movement and movement bucket (disabled by default).
-- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value. If readings stay stale for over an hour while the base station is on, a warning also appears under Settings → System → Repairs; it clears itself when readings return.
+- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. The time is a setting (see Options). On a Smart Sock 2, the sock counts as live while either heart rate or oxygen is still updating. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value. If readings stay stale for over an hour while the base station is on, a warning also appears under Settings → System → Repairs; it clears itself when readings return.
 - Switch - base station on/off.
 - Monitoring state - one of monitoring, low signal, base station off, readings stale, charging, or charged. Handy for a dashboard tile or a single automation trigger.
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
@@ -58,6 +58,17 @@ To install it:
 
 The entity IDs assume Home Assistant is in English. If a card says "Entity not available", check that entity's ID on the device page. With more than one sock, duplicate the view and use the other sock's prefix. The daily trends start filling in from when the integration was installed. Gauge ranges are for display only and have no medical meaning; alerts come from Owlet.
 
+## Blueprints
+
+Ready-made automations that notify a phone with the Home Assistant Companion app. Adapted from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet).
+
+| Blueprint | What it does | Import |
+| --- | --- | --- |
+| Owlet alert notification | Notifies when any of the Owlet alerts you pick turns on. Optionally sends it as a critical notification, which sounds even on silent or do not disturb. | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fitsjustlabs%2Fowlet%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fowlet%2Fowlet_alert_notification.yaml) |
+| Owlet readings stale notification | Notifies when a sock's Readings stale sensor turns on, after an optional extra delay, and optionally again when readings come back. | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fitsjustlabs%2Fowlet%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fowlet%2Fowlet_stale_data_notification.yaml) |
+
+Like the integration, these depend on polling Owlet's cloud and can be late. Keep the Owlet base station and app as your alarm.
+
 ## Development
 
 ```bash
@@ -68,9 +79,14 @@ uv pip install --python .venv -r requirements_test.txt
 
 Changes reach `main` only through pull requests. To release, bump `version` in `custom_components/owlet/manifest.json` and add a matching `## <version>` section to `CHANGELOG.md` in the same pull request. When it merges, the Release workflow runs the tests, tags the version, and publishes `owlet.zip` with that changelog section as the notes. Merges that don't change the version publish nothing.
 
+## Reconfigure
+
+To change the region or log in again without removing the integration, open Settings → Devices & services → Owlet → ⋮ → **Reconfigure**.
+
 ## Options
 
 - Seconds between polling - Number of seconds between each call for data from the owlet cloud service, default is 5 seconds.
+- Minutes before readings count as stale - how long the sock can go without a new reading before live readings show as unavailable and Readings stale turns on. Default 2; 0 turns stale detection off.
 
 ---
 

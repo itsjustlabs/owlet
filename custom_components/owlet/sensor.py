@@ -48,7 +48,6 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         translation_key="o2saturation",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:leaf",
         available_during_charging=False,
     ),
     OwletSensorEntityDescription(
@@ -56,7 +55,6 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         translation_key="heartrate",
         native_unit_of_measurement="bpm",
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:heart-pulse",
         available_during_charging=False,
     ),
     OwletSensorEntityDescription(
@@ -73,6 +71,7 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
         available_during_charging=True,
     ),
     OwletSensorEntityDescription(
@@ -87,7 +86,6 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         key="movement",
         translation_key="movement",
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:cursor-move",
         entity_registry_enabled_default=False,
         available_during_charging=False,
     ),
@@ -95,7 +93,6 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         key="movement_bucket",
         translation_key="movementbucket",
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:bucket-outline",
         entity_registry_enabled_default=False,
         available_during_charging=False,
     ),
@@ -103,7 +100,6 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
         key="firmware_update_status",
         translation_key="firmware_update_status",
         entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:update",
         available_during_charging=True,
     ),
     OwletSensorEntityDescription(
@@ -209,7 +205,6 @@ class OwletOxygenAverageSensor(OwletSensor):
         key="oxygen_10_av",
         translation_key="o2saturation10a",
         native_unit_of_measurement=PERCENTAGE,
-        icon="mdi:leaf",
         available_during_charging=False,
         state_class=SensorStateClass.MEASUREMENT,
     )
@@ -237,7 +232,6 @@ class OwletMonitoringStateSensor(OwletSensor):
         key="monitoring_state",
         translation_key="monitoring_state",
         device_class=SensorDeviceClass.ENUM,
-        icon="mdi:baby-face-outline",
         available_during_charging=True,
     )
 
