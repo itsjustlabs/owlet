@@ -9,10 +9,13 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import OwletConfigEntry, OwletCoordinator
+from .const import DOMAIN
 from .entity import OwletBaseEntity
+from .pyowletapi.exceptions import OwletError
 from .pyowletapi.sock import Sock
 
 SCAN_INTERVAL = timedelta(seconds=5)
@@ -23,8 +26,8 @@ PARALLEL_UPDATES = 0
 class OwletSwitchEntityDescription(SwitchEntityDescription):
     """Describes Owlet switch entity."""
 
-    turn_on_fn: Callable[[Sock], Callable[[bool], Coroutine[Any, Any, None]]]
-    turn_off_fn: Callable[[Sock], Callable[[bool], Coroutine[Any, Any, None]]]
+    turn_on_fn: Callable[[Sock], Callable[[bool], Coroutine[Any, Any, bool]]]
+    turn_off_fn: Callable[[Sock], Callable[[bool], Coroutine[Any, Any, bool]]]
     available_during_charging: bool
 
 
@@ -84,10 +87,22 @@ class OwletBaseSwitch(OwletBaseEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
-        await self.entity_description.turn_on_fn(self.sock)(True)
-        await self.coordinator.async_request_refresh()
+        await self._async_send(self.entity_description.turn_on_fn(self.sock)(True))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
-        await self.entity_description.turn_off_fn(self.sock)(False)
+        await self._async_send(self.entity_description.turn_off_fn(self.sock)(False))
+
+    async def _async_send(self, command: Coroutine[Any, Any, bool]) -> None:
+        """Send a command, raising an error the user sees if Owlet rejects it."""
+        try:
+            accepted = await command
+        except OwletError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_failed"
+            ) from err
+        if not accepted:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_failed"
+            )
         await self.coordinator.async_request_refresh()
