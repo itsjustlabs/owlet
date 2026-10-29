@@ -23,7 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, POLLING_INTERVAL
+from .const import DEFAULT_TITLE, DOMAIN, POLLING_INTERVAL
 from .pyowletapi.api import OwletAPI
 from .pyowletapi.exceptions import (
     OwletConnectionError,
@@ -46,6 +46,7 @@ class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Owlet Smart Sock."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -78,7 +79,7 @@ class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
             else:
                 return self.async_create_entry(
-                    title=user_input[CONF_USERNAME],
+                    title=DEFAULT_TITLE,
                     data={
                         CONF_REGION: user_input[CONF_REGION],
                         CONF_USERNAME: user_input[CONF_USERNAME],

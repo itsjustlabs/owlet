@@ -47,7 +47,7 @@ async def test_form(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        assert result["title"] == "sample@gmail.com"
+        assert result["title"] == "Owlet"
         assert result["data"] == {
             "region": "europe",
             "username": "sample@gmail.com",

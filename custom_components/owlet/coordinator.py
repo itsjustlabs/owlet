@@ -5,7 +5,6 @@ from datetime import timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
@@ -63,9 +62,7 @@ class OwletCoordinator(DataUpdateCoordinator[None]):
                     data={**self.config_entry.data, **properties["tokens"]},
                 )
         except OwletAuthenticationError as err:
-            raise ConfigEntryAuthFailed(
-                f"Authentication failed for {self.config_entry.data[CONF_USERNAME]}"
-            ) from err
+            raise ConfigEntryAuthFailed("Owlet login expired") from err
         except (OwletError, OwletConnectionError) as err:
             raise UpdateFailed(err) from err
 
