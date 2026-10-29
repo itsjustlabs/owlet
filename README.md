@@ -31,7 +31,7 @@ This integration provides the following entities:
 
 - Binary sensors - charging status, awake, sock off, high heart rate alert, low heart rate alert, high oxygen alert, low oxygen alert, critical oxygen alert, low battery alert, critical battery alert, lost power alert, and sock disconnected alert.
 - Sensors - battery level, oxygen saturation, oxygen saturation 10 minute average, heart rate, battery time remaining, signal strength, skin temperature, sleep state, last updated, and movement and movement bucket (disabled by default).
-- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value. If readings stay stale for over an hour while the base station is on, a warning also appears under Settings → System → Repairs; it clears itself when readings return.
+- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. The time is a setting (see Options). On a Smart Sock 2, the sock counts as live while either heart rate or oxygen is still updating. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value. If readings stay stale for over an hour while the base station is on, a warning also appears under Settings → System → Repairs; it clears itself when readings return.
 - Switch - base station on/off.
 - Monitoring state - one of monitoring, low signal, base station off, readings stale, charging, or charged. Handy for a dashboard tile or a single automation trigger.
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
@@ -54,6 +54,7 @@ To change the region or log in again without removing the integration, open Sett
 ## Options
 
 - Seconds between polling - Number of seconds between each call for data from the owlet cloud service, default is 5 seconds.
+- Minutes before readings count as stale - how long the sock can go without a new reading before live readings show as unavailable and Readings stale turns on. Default 2; 0 turns stale detection off.
 
 ---
 

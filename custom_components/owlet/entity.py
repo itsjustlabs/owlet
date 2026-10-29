@@ -1,6 +1,6 @@
 """Base class for Owlet entities."""
 
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -28,11 +28,14 @@ class OwletBaseEntity(CoordinatorEntity[OwletCoordinator], Entity):
         return DeviceInfo(
             identifiers={(DOMAIN, self.sock.serial)},
             name=f"Owlet Sock {self.sock.serial}",
-            connections={("mac", getattr(self.sock, "mac", "unknown"))},
+            connections={(CONNECTION_NETWORK_MAC, self.sock.mac)}
+            if self.sock.mac
+            else set(),
             suggested_area="Nursery",
             configuration_url="https://my.owletcare.com/",
             manufacturer="Owlet Baby Care",
             model=getattr(self.sock, "model", None),
             sw_version=getattr(self.sock, "sw_version", None),
-            hw_version=getattr(self.sock, "hw_version", "3r8"),
+            serial_number=self.sock.serial,
+            hw_version=self.sock.properties.get("hardware_version"),
         )

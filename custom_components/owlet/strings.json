@@ -46,7 +46,11 @@
       "init": {
         "title": "Configure options for Owlet",
         "data": {
-          "scan_interval": "Polling interval in seconds (minimum 5)"
+          "scan_interval": "Polling interval in seconds (minimum 5)",
+          "stale_threshold": "Minutes before readings count as stale (0 turns this off)"
+        },
+        "data_description": {
+          "stale_threshold": "Heart rate, oxygen and the other live readings show as unavailable, and Readings stale turns on, when the sock hasn't sent a reading for this long. Default 2."
         }
       }
     }
@@ -173,6 +177,11 @@
     "stale_data": {
       "title": "Owlet readings stopped updating",
       "description": "{name} has not sent a new reading since {last_updated}, although it is off the charger and the base station is on. Heart rate and oxygen show as unavailable until readings resume.\n\nRestarting the base station (unplug it for a few seconds) usually fixes this. This warning clears by itself when readings come back."
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Owlet didn't accept the command. Try again in a moment."
     }
   },
   "selector": {

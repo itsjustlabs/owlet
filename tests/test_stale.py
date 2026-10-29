@@ -76,12 +76,49 @@ async def test_charging_is_not_stale(
     assert hass.states.get(f"binary_sensor.{PREFIX}_readings_stale").state == "off"
 
 
-async def test_v2_sock_has_no_stale_sensor(hass: HomeAssistant) -> None:
-    """v2 socks report no update time, so no stale sensor is created."""
+@pytest.mark.parametrize(
+    ("now", "stale"),
+    [("2023-11-20T14:06:00+00:00", "off"), ("2023-11-20T14:10:00+00:00", "on")],
+)
+async def test_v2_sock_staleness(
+    hass: HomeAssistant, frozen_time: FrozenDateTimeFactory, now: str, stale: str
+) -> None:
+    """v2 socks are live while heart rate or oxygen is still updating."""
+    frozen_time.move_to(now)
     await async_init_integration(hass, properties_fixture="update_properties_v2.json")
 
-    assert hass.states.get(f"binary_sensor.{PREFIX}_readings_stale") is None
-    assert hass.states.get(f"sensor.{PREFIX}_last_updated") is None
+    # Oxygen was last stored at 12:22 (Owlet only stores changes); heart rate at 14:05.
+    assert (
+        hass.states.get(f"sensor.{PREFIX}_last_updated").state
+        == "2023-11-20T14:05:01+00:00"
+    )
+    assert hass.states.get(f"binary_sensor.{PREFIX}_readings_stale").state == stale
+    o2 = hass.states.get(f"sensor.{PREFIX}_o2_saturation").state
+    assert (o2 == "unavailable") == (stale == "on")
+
+
+@pytest.mark.parametrize(
+    ("threshold", "stale"), [(0, "off"), (10, "off"), (3, "on")]
+)
+async def test_stale_threshold_option(
+    hass: HomeAssistant,
+    frozen_time: FrozenDateTimeFactory,
+    threshold: int,
+    stale: str,
+) -> None:
+    """The threshold comes from the options, and 0 turns detection off."""
+    entry = await async_init_integration(
+        hass,
+        properties_fixture="update_properties_asleep.json",
+        options={"stale_threshold": threshold},
+    )
+    coordinator = entry.runtime_data["SERIAL_NUMBER"]
+
+    frozen_time.tick(timedelta(minutes=5))
+    coordinator.async_update_listeners()
+    await hass.async_block_till_done()
+
+    assert hass.states.get(f"binary_sensor.{PREFIX}_readings_stale").state == stale
 
 
 async def _poll_after(
