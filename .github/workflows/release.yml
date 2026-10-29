@@ -35,6 +35,11 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - uses: "actions/setup-python@v5"
+        if: steps.version.outputs.exists == 'false'
+        with:
+          python-version: "3.13"
+
       - name: Run tests
         if: steps.version.outputs.exists == 'false'
         run: |
