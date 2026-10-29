@@ -6,11 +6,23 @@
                     "region": "Région",
                     "username": "Email",
                     "password": "Mot de passe"
+                },
+                "data_description": {
+                    "region": "Choisissez Europe si votre compte Owlet a été créé dans l'UE ou au Royaume-Uni, sinon choisissez Monde."
                 }
             },
             "reauth_confirm": {
                 "title": "Réauthentification requise pour Owlet",
                 "data": {
+                    "password": "Mot de passe"
+                },
+                "description": "La connexion Owlet de {username} n'est plus valide. Saisissez à nouveau le mot de passe."
+            },
+            "reconfigure": {
+                "title": "Reconfigurer Owlet",
+                "description": "Modifiez la région ou reconnectez-vous pour {username}.",
+                "data": {
+                    "region": "Région",
                     "password": "Mot de passe"
                 }
             }
@@ -24,7 +36,8 @@
         },
         "abort": {
             "already_configured": "Appareil déjà configuré",
-            "reauth_successful": "Réauthentification réussie"
+            "reauth_successful": "Réauthentification réussie",
+            "reconfigure_successful": "Reconfiguration réussie"
         }
     },
     "options": {
@@ -133,6 +146,14 @@
     "exceptions": {
         "command_failed": {
             "message": "Owlet n'a pas accepté la commande. Réessayez dans un instant."
+        }
+    },
+    "selector": {
+        "region": {
+            "options": {
+                "europe": "Europe",
+                "world": "Monde"
+            }
         }
     }
 }

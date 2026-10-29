@@ -20,7 +20,8 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -39,13 +40,47 @@ from .pyowletapi.exceptions import (
 
 _LOGGER = logging.getLogger(__name__)
 
+REGION_SELECTOR = selector.SelectSelector(
+    selector.SelectSelectorConfig(
+        options=["europe", "world"],
+        translation_key="region",
+        mode=selector.SelectSelectorMode.DROPDOWN,
+    )
+)
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_REGION): vol.In(["europe", "world"]),
+        vol.Required(CONF_REGION): REGION_SELECTOR,
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
     }
 )
+
+
+async def _async_login(
+    hass: HomeAssistant, region: str, username: str, password: str
+) -> tuple[OwletAPI, dict[str, str]]:
+    """Log in and check the account has socks; return the API and any form errors."""
+    owlet_api = OwletAPI(
+        region=region,
+        user=username,
+        password=password,
+        session=async_get_clientsession(hass),
+    )
+    errors: dict[str, str] = {}
+    try:
+        await owlet_api.authenticate()
+        await owlet_api.get_devices()
+    except OwletDevicesError:
+        errors["base"] = "no_devices"
+    except OwletCredentialsError:
+        errors["base"] = "invalid_credentials"
+    except OwletConnectionError:
+        errors["base"] = "cannot_connect"
+    except Exception:  # pylint: disable=broad-except
+        _LOGGER.exception("Unexpected exception")
+        errors["base"] = "unknown"
+    return owlet_api, errors
 
 
 class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -60,30 +95,16 @@ class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            owlet_api = OwletAPI(
-                region=user_input[CONF_REGION],
-                user=user_input[CONF_USERNAME],
-                password=user_input[CONF_PASSWORD],
-                session=async_get_clientsession(self.hass),
-            )
-
             await self.async_set_unique_id(user_input[CONF_USERNAME].lower())
             self._abort_if_unique_id_configured()
 
-            try:
-                await owlet_api.authenticate()
-                await owlet_api.get_devices()
-
-            except OwletDevicesError:
-                errors["base"] = "no_devices"
-            except OwletCredentialsError:
-                errors["base"] = "invalid_credentials"
-            except OwletConnectionError:
-                errors["base"] = "cannot_connect"
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            else:
+            owlet_api, errors = await _async_login(
+                self.hass,
+                user_input[CONF_REGION],
+                user_input[CONF_USERNAME],
+                user_input[CONF_PASSWORD],
+            )
+            if not errors:
                 return self.async_create_entry(
                     title=DEFAULT_TITLE,
                     data={
@@ -103,6 +124,43 @@ class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
         """Get the options flow for this handler."""
         return OptionsFlowHandler()
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the region or log in again without removing the entry."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            owlet_api, errors = await _async_login(
+                self.hass,
+                user_input[CONF_REGION],
+                entry.data[CONF_USERNAME],
+                user_input[CONF_PASSWORD],
+            )
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates={
+                        CONF_REGION: user_input[CONF_REGION],
+                        **owlet_api.tokens,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_REGION, default=entry.data[CONF_REGION]
+                    ): REGION_SELECTOR,
+                    vol.Required(CONF_PASSWORD): str,
+                }
+            ),
+            description_placeholders={CONF_USERNAME: entry.data[CONF_USERNAME]},
+            errors=errors,
+        )
 
     async def async_step_reauth(
         self, entry_data: Mapping[str, Any]
@@ -141,6 +199,7 @@ class OwletConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            description_placeholders={CONF_USERNAME: reauth_entry.data[CONF_USERNAME]},
             errors=errors,
         )
 

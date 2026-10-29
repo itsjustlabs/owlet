@@ -6,11 +6,23 @@
           "region": "Region",
           "username": "Email",
           "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "region": "Pick Europe if your Owlet account was created in the EU or UK, otherwise pick World."
         }
       },
       "reauth_confirm": {
         "title": "Reauthentication required for Owlet",
         "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "description": "The Owlet login for {username} is no longer valid. Enter the password again."
+      },
+      "reconfigure": {
+        "title": "Reconfigure Owlet",
+        "description": "Change the region or log in again for {username}.",
+        "data": {
+          "region": "Region",
           "password": "[%key:common::config_flow::data::password%]"
         }
       }
@@ -25,7 +37,8 @@
     },
     "abort": {
       "already_configured": "Device already configured",
-      "reauth_successful": "Reauthentication successful"
+      "reauth_successful": "Reauthentication successful",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "options": {
@@ -169,6 +182,14 @@
   "exceptions": {
     "command_failed": {
       "message": "Owlet didn't accept the command. Try again in a moment."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "europe": "Europe",
+        "world": "World"
+      }
     }
   }
 }
