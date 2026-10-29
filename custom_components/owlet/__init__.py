@@ -15,11 +15,13 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     CONF_OWLET_EXPIRY,
     CONF_OWLET_REFRESH,
+    DOMAIN,
     POLLING_INTERVAL,
     SUPPORTED_VERSIONS,
 )
@@ -105,3 +107,10 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> Non
 async def async_unload_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Clear Repairs warnings for the socks of a removed entry."""
+    for issue_id in list(ir.async_get(hass).issues):
+        if issue_id[0] == DOMAIN and issue_id[1].startswith("stale_data_"):
+            ir.async_delete_issue(hass, DOMAIN, issue_id[1])

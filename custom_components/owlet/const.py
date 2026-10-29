@@ -12,6 +12,8 @@ POLLING_INTERVAL = 5
 # Owlet keeps returning the last readings when the base station stops
 # relaying them, so treat vitals older than this as no longer live.
 STALE_AFTER = timedelta(minutes=2)
+# Readings stale this long, with the base station on, raise a Repairs warning.
+STALE_ISSUE_AFTER = timedelta(hours=1)
 MANUFACTURER = "Owlet Baby Care"
 SLEEP_STATES = {0: "unknown", 1: "awake", 8: "light_sleep", 15: "deep_sleep"}
 MONITORING_STATES = [
