@@ -207,10 +207,10 @@ async def test_options_flow(hass: HomeAssistant) -> None:
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        user_input={CONF_SCAN_INTERVAL: 10},
+        user_input={CONF_SCAN_INTERVAL: 10, "stale_threshold": 5},
     )
     await hass.async_block_till_done()
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == ""
-    assert result["data"] == {CONF_SCAN_INTERVAL: 10}
+    assert result["data"] == {CONF_SCAN_INTERVAL: 10, "stale_threshold": 5}

@@ -230,13 +230,10 @@ class Sock:
                             data_type, vitals[vital_key]
                         )
 
-            try:
-                properties["last_updated"] = datetime.datetime.strptime(
-                    self._raw_properties["REAL_TIME_VITALS"]["data_updated_at"],
-                    "%Y-%m-%dT%H:%M:%SZ",
-                ).replace(tzinfo=datetime.timezone.utc)
-            except (KeyError, TypeError, ValueError):
-                pass
+            if (
+                updated := _updated_at(self._raw_properties.get("REAL_TIME_VITALS"))
+            ) is not None:
+                properties["last_updated"] = updated
 
         if self._version == 2:
             for data_type, vitals_list in VITALS_2.items():
@@ -245,6 +242,18 @@ class Sock:
                         properties[vital_desc] = _convert(
                             data_type, self._raw_properties[vital_key].get("value")
                         )
+
+            # The v2 sock posts heart rate and oxygen as separate properties,
+            # and Owlet only stores a new oxygen value when it changes. So the
+            # sock is live if either one is updating.
+            timestamps = [
+                updated
+                for key in ("HEART_RATE", "OXYGEN_LEVEL")
+                if (updated := _updated_at(self._raw_properties.get(key)))
+                is not None
+            ]
+            if timestamps:
+                properties["last_updated"] = max(timestamps)
 
         return properties
 
@@ -312,3 +321,13 @@ class Sock:
         )
 
         return True if response else False
+
+
+def _updated_at(raw_property: Optional[dict[str, Any]]) -> Optional[datetime.datetime]:
+    """Return when Ayla last stored a value for this property, in UTC."""
+    try:
+        return datetime.datetime.strptime(
+            raw_property["data_updated_at"], "%Y-%m-%dT%H:%M:%SZ"
+        ).replace(tzinfo=datetime.timezone.utc)
+    except (KeyError, TypeError, ValueError):
+        return None

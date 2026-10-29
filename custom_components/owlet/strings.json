@@ -33,7 +33,11 @@
       "init": {
         "title": "Configure options for Owlet",
         "data": {
-          "scan_interval": "Polling interval in seconds (minimum 5)"
+          "scan_interval": "Polling interval in seconds (minimum 5)",
+          "stale_threshold": "Minutes before readings count as stale (0 turns this off)"
+        },
+        "data_description": {
+          "stale_threshold": "Heart rate, oxygen and the other live readings show as unavailable, and Readings stale turns on, when the sock hasn't sent a reading for this long. Default 2."
         }
       }
     }

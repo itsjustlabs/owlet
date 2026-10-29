@@ -23,7 +23,13 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DEFAULT_TITLE, DOMAIN, POLLING_INTERVAL
+from .const import (
+    CONF_STALE_THRESHOLD,
+    DEFAULT_TITLE,
+    DOMAIN,
+    POLLING_INTERVAL,
+    STALE_AFTER,
+)
 from .pyowletapi.api import OwletAPI
 from .pyowletapi.exceptions import (
     OwletConnectionError,
@@ -157,6 +163,12 @@ class OptionsFlowHandler(OptionsFlow):
                         CONF_SCAN_INTERVAL, POLLING_INTERVAL
                     ),
                 ): vol.All(vol.Coerce(int), vol.Range(min=5)),
+                vol.Required(
+                    CONF_STALE_THRESHOLD,
+                    default=self.config_entry.options.get(
+                        CONF_STALE_THRESHOLD, int(STALE_AFTER.total_seconds() // 60)
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=120)),
             }
         )
 

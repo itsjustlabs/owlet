@@ -35,6 +35,7 @@ async def async_init_integration(
     properties_fixture: str = "update_properties_charging.json",
     devices_fixture: str = "get_devices.json",
     title: str = "sample@gmail.com",
+    options: dict | None = None,
 ) -> MockConfigEntry:
     """Set up integration entry."""
     entry = MockConfigEntry(
@@ -48,7 +49,7 @@ async def async_init_integration(
             CONF_OWLET_EXPIRY: 100,
             CONF_OWLET_REFRESH: "refresh_token",
         },
-        options={CONF_SCAN_INTERVAL: POLLING_INTERVAL},
+        options={CONF_SCAN_INTERVAL: POLLING_INTERVAL, **(options or {})},
     )
 
     entry.add_to_hass(hass)
