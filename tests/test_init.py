@@ -25,6 +25,7 @@ from homeassistant.const import (
     CONF_REGION,
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
+    EntityCategory,
     Platform,
 )
 from homeassistant.core import HomeAssistant
@@ -114,7 +115,7 @@ async def test_async_setup_entry_connection_error(hass: HomeAssistant) -> None:
 
 
 async def test_async_setup_entry_devices_error(hass: HomeAssistant) -> None:
-    """Test setting up entry with device error."""
+    """Test no socks found retries setup later instead of giving up."""
     entry = await async_init_integration(hass, skip_setup=True)
 
     with patch(
@@ -126,7 +127,7 @@ async def test_async_setup_entry_devices_error(hass: HomeAssistant) -> None:
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-        assert entry.state == ConfigEntryState.SETUP_ERROR
+        assert entry.state == ConfigEntryState.SETUP_RETRY
         await hass.config_entries.async_unload(entry.entry_id)
 
 
@@ -205,3 +206,56 @@ async def test_auth_error_does_not_log_email(
 
     assert entry.state == ConfigEntryState.SETUP_ERROR
     assert "sample@gmail.com" not in caplog.text.lower()
+
+
+@pytest.mark.parametrize(
+    ("properties_fixture", "hw_version"),
+    [("update_properties_asleep.json", "obl"), ("update_properties_v2.json", "B2_1_0_0_6c36")],
+)
+async def test_device_info(
+    hass: HomeAssistant, properties_fixture: str, hw_version: str
+) -> None:
+    """Test the device shows the sock's reported hardware version and serial."""
+    entry = await async_init_integration(hass, properties_fixture=properties_fixture)
+
+    device = dr.async_get(hass).async_get_device(
+        identifiers={(DOMAIN, "SERIAL_NUMBER")}
+    )
+    assert device.hw_version == hw_version
+    assert device.serial_number == "SERIAL_NUMBER"
+    assert device.connections == {(dr.CONNECTION_NETWORK_MAC, "MAC")}
+
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_device_without_mac(hass: HomeAssistant) -> None:
+    """Test a sock with no MAC address gets no placeholder connection."""
+    devices = json.loads(load_fixture("get_devices.json"))
+    devices["response"][0]["device"]["mac"] = ""
+    entry = await async_init_integration(hass, skip_setup=True)
+
+    with patch(
+        "custom_components.owlet.OwletAPI.get_properties",
+        return_value=json.loads(load_fixture("update_properties_asleep.json")),
+    ), patch("custom_components.owlet.OwletAPI.authenticate", return_value=None), patch(
+        "custom_components.owlet.OwletAPI.get_devices", return_value=devices
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    device = dr.async_get(hass).async_get_device(
+        identifiers={(DOMAIN, "SERIAL_NUMBER")}
+    )
+    assert device.connections == set()
+
+
+async def test_diagnostic_entities(hass: HomeAssistant) -> None:
+    """Test signal strength and readings stale are listed under Diagnostic."""
+    await async_init_integration(hass, properties_fixture="update_properties_asleep.json")
+
+    registry = er.async_get(hass)
+    for entity_id in (
+        "sensor.owlet_sock_serial_number_signal_strength",
+        "binary_sensor.owlet_sock_serial_number_readings_stale",
+    ):
+        assert registry.async_get(entity_id).entity_category == EntityCategory.DIAGNOSTIC

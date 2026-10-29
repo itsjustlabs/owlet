@@ -13,6 +13,8 @@ SUPPORTED_VERSIONS = [2, 3]
 POLLING_INTERVAL = 5
 # Owlet keeps returning the last readings when the base station stops
 # relaying them, so treat vitals older than this as no longer live.
+# The user can change this in the options; 0 turns stale detection off.
+CONF_STALE_THRESHOLD = "stale_threshold"
 STALE_AFTER = timedelta(minutes=2)
 # Readings stale this long, with the base station on, raise a Repairs warning.
 STALE_ISSUE_AFTER = timedelta(hours=1)

@@ -63,9 +63,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> boo
     except OwletConnectionError as err:
         raise ConfigEntryNotReady("Error connecting to Owlet") from err
 
-    except OwletDevicesError:
-        _LOGGER.error("No owlet devices found to set up")
-        return False
+    except OwletDevicesError as err:
+        # Owlet sometimes returns no devices briefly; try again later.
+        raise ConfigEntryNotReady("No supported Owlet socks found") from err
 
     if "tokens" in devices:
         hass.config_entries.async_update_entry(
