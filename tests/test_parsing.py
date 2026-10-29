@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import patch
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from . import async_init_integration, load_fixture
 
@@ -86,3 +87,31 @@ async def test_firmware_update_status(hass: HomeAssistant) -> None:
         hass.states.get(f"sensor.{PREFIX}_firmware_update_status").state
         == "downloading"
     )
+
+
+async def test_low_signal_and_discomfort(hass: HomeAssistant) -> None:
+    """LOW_INTEG_READ and DISCOMFORT_ALRT have their own binary sensors."""
+    entry = await async_init_integration(
+        hass, properties_fixture="update_properties_asleep.json"
+    )
+    assert hass.states.get(f"binary_sensor.{PREFIX}_low_signal").state == "off"
+    assert hass.states.get(f"binary_sensor.{PREFIX}_discomfort_alert").state == "off"
+
+    await _poll(hass, entry, _asleep_with(LOW_INTEG_READ=1, DISCOMFORT_ALRT=1))
+
+    assert hass.states.get(f"binary_sensor.{PREFIX}_low_signal").state == "on"
+    assert hass.states.get(f"binary_sensor.{PREFIX}_discomfort_alert").state == "on"
+
+
+async def test_priority_alarms_start_disabled(hass: HomeAssistant) -> None:
+    """Owlet's alarm priority flags are registered but disabled by default."""
+    await async_init_integration(
+        hass, properties_fixture="update_properties_asleep.json"
+    )
+    registry = er.async_get(hass)
+
+    for level in ("high", "medium", "low"):
+        entity_id = f"binary_sensor.{PREFIX}_{level}_priority_alarm"
+        assert hass.states.get(entity_id) is None
+        entity = registry.async_get(entity_id)
+        assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION

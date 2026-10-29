@@ -68,6 +68,21 @@
             },
             "stale_data": {
                 "name": "Readings stale"
+            },
+            "discomfort_alrt": {
+                "name": "Discomfort alert"
+            },
+            "low_signal": {
+                "name": "Low signal"
+            },
+            "high_priority_alarm": {
+                "name": "High priority alarm"
+            },
+            "medium_priority_alarm": {
+                "name": "Medium priority alarm"
+            },
+            "low_priority_alarm": {
+                "name": "Low priority alarm"
             }
         },
         "sensor": {

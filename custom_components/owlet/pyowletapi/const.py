@@ -37,11 +37,21 @@ PropertyKey = Literal[
     "last_updated",
     "critical_battery_alert",
     "critical_oxygen_alert",
+    "low_integrity_read",
+    "discomfort_alert",
+    "high_priority_alarm",
+    "medium_priority_alarm",
+    "low_priority_alarm",
 ]
 
 
 class Properties(TypedDict, total=False):
     critical_battery_alert: bool
+    low_integrity_read: bool
+    discomfort_alert: bool
+    high_priority_alarm: bool
+    medium_priority_alarm: bool
+    low_priority_alarm: bool
     critical_oxygen_alert: bool
     high_oxygen_alert: bool
     low_battery_alert: bool
@@ -91,6 +101,11 @@ PROPERTIES: dict[type, dict[PropertyKey, str]] = {
         "sock_off": "SOCK_OFF",
         "critical_battery_alert": "CRIT_BATT_ALRT",
         "critical_oxygen_alert": "CRIT_OX_ALRT",
+        "low_integrity_read": "LOW_INTEG_READ",
+        "discomfort_alert": "DISCOMFORT_ALRT",
+        "high_priority_alarm": "PREVIEW_HIGH_PRIORITY_ALARM",
+        "medium_priority_alarm": "PREVIEW_MED_PRIORITY_ALARM",
+        "low_priority_alarm": "PREVIEW_LOW_PRIORITY_ALARM",
     },
 }
 

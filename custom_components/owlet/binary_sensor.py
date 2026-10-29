@@ -85,6 +85,43 @@ SENSORS: tuple[OwletBinarySensorEntityDescription, ...] = (
         available_during_charging=True,
     ),
     OwletBinarySensorEntityDescription(
+        key="discomfort_alert",
+        translation_key="discomfort_alrt",
+        device_class=BinarySensorDeviceClass.SOUND,
+        available_during_charging=True,
+    ),
+    # On when the sock is on but can't get a reading (the app's yellow
+    # "low signal" notification), so heart rate and oxygen read 0.
+    OwletBinarySensorEntityDescription(
+        key="low_integrity_read",
+        translation_key="low_signal",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        available_during_charging=False,
+    ),
+    # Owlet's own alarm priority flags. What each level covers isn't
+    # documented, so they start disabled.
+    OwletBinarySensorEntityDescription(
+        key="high_priority_alarm",
+        translation_key="high_priority_alarm",
+        device_class=BinarySensorDeviceClass.SOUND,
+        entity_registry_enabled_default=False,
+        available_during_charging=True,
+    ),
+    OwletBinarySensorEntityDescription(
+        key="medium_priority_alarm",
+        translation_key="medium_priority_alarm",
+        device_class=BinarySensorDeviceClass.SOUND,
+        entity_registry_enabled_default=False,
+        available_during_charging=True,
+    ),
+    OwletBinarySensorEntityDescription(
+        key="low_priority_alarm",
+        translation_key="low_priority_alarm",
+        device_class=BinarySensorDeviceClass.SOUND,
+        entity_registry_enabled_default=False,
+        available_during_charging=True,
+    ),
+    OwletBinarySensorEntityDescription(
         key="sock_off",
         translation_key="sock_off",
         device_class=BinarySensorDeviceClass.POWER,
