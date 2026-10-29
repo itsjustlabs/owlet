@@ -137,6 +137,17 @@
       },
       "firmware_update_status": {
         "name": "Firmware update status"
+      },
+      "monitoring_state": {
+        "name": "Monitoring state",
+        "state": {
+          "monitoring": "Monitoring",
+          "low_signal": "Low signal",
+          "base_station_off": "Base station off",
+          "stale": "Readings stale",
+          "charging": "Charging",
+          "charged": "Charged"
+        }
       }
     },
     "switch": {

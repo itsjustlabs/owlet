@@ -14,3 +14,11 @@ POLLING_INTERVAL = 5
 STALE_AFTER = timedelta(minutes=2)
 MANUFACTURER = "Owlet Baby Care"
 SLEEP_STATES = {0: "unknown", 1: "awake", 8: "light_sleep", 15: "deep_sleep"}
+MONITORING_STATES = [
+    "monitoring",
+    "low_signal",
+    "base_station_off",
+    "stale",
+    "charging",
+    "charged",
+]

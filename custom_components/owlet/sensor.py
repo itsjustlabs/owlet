@@ -22,7 +22,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import SLEEP_STATES
+from .const import MONITORING_STATES, SLEEP_STATES
 from .coordinator import OwletConfigEntry, OwletCoordinator
 from .entity import OwletBaseEntity
 
@@ -141,6 +141,8 @@ async def async_setup_entry(
             in coordinator.sock.properties
         ):
             sensors.append(OwletOxygenAverageSensor(coordinator))
+        if "charging" in coordinator.sock.properties:
+            sensors.append(OwletMonitoringStateSensor(coordinator))
 
     async_add_entities(sensors)
 
@@ -225,3 +227,50 @@ class OwletOxygenAverageSensor(OwletSensor):
         # Owlet reports 255 until it has 10 minutes of readings.
         average = self.sock.properties.get("oxygen_10_av")
         return super().available and average is not None and 0 <= average <= 100
+
+
+class OwletMonitoringStateSensor(OwletSensor):
+    """What the sock is doing, in one state (ported from jlamendo/ha-sensor.owlet)."""
+
+    _attr_options = MONITORING_STATES
+    entity_description = OwletSensorEntityDescription(
+        key="monitoring_state",
+        translation_key="monitoring_state",
+        device_class=SensorDeviceClass.ENUM,
+        icon="mdi:baby-face-outline",
+        available_during_charging=True,
+    )
+
+    def __init__(
+        self,
+        coordinator: OwletCoordinator,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, self.entity_description)
+
+    @property
+    def native_value(self) -> str:
+        """Return the monitoring state."""
+        properties = self.sock.properties
+        match properties.get("charging"):
+            case 1:
+                return "charging"
+            case 2:
+                return "charged"
+        if self.coordinator.vitals_stale:
+            return "stale"
+        # Zero heart rate and oxygen with no low-reading alert means the sock
+        # can't get a reading, even when Owlet hasn't set LOW_INTEG_READ.
+        heart_rate = properties.get("heart_rate") or 0
+        oxygen = properties.get("oxygen_saturation") or 0
+        no_reading = heart_rate <= 0 and oxygen <= 0
+        low_signal = properties.get("low_integrity_read") or (
+            no_reading
+            and not properties.get("low_heart_rate_alert")
+            and not properties.get("low_oxygen_alert")
+        )
+        if low_signal and not properties.get("base_station_on"):
+            return "base_station_off"
+        if low_signal:
+            return "low_signal"
+        return "monitoring"

@@ -33,6 +33,9 @@ This integration provides the following entities:
 - Sensors - battery level, oxygen saturation, oxygen saturation 10 minute average, heart rate, battery time remaining, signal strength, skin temperature, sleep state, and last updated.
 - Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value.
 - Switch - base station on/off.
+- Monitoring state - one of monitoring, low signal, base station off, readings stale, charging, or charged. Handy for a dashboard tile or a single automation trigger.
+- Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
+- Firmware update status (diagnostic).
 
 ## Development
 
