@@ -10,6 +10,21 @@ from typing import Union, TypedDict, NotRequired, Any, Optional
 logger: Logger = logging.getLogger(__package__)
 
 
+def _convert(data_type: type, value: Any) -> Any:
+    """Convert a raw value, or return None when it is missing or unreadable.
+
+    One bad value (Owlet can send null movement or a "bad" signal strength)
+    must not fail the whole poll.
+    """
+    if value is None:
+        return None
+    try:
+        return data_type(value)
+    except (TypeError, ValueError):
+        logger.debug("Cannot convert %r to %s", value, data_type.__name__)
+        return None
+
+
 class PropertiesDict(TypedDict):
     raw_properties: dict[str, dict[str, Any]]
     properties: Properties
@@ -183,51 +198,53 @@ class Sock:
 
         for data_type, properties_tmp in PROPERTIES.items():
             for key, property in properties_tmp.items():
-                try:
-                    properties[key] = data_type(
-                        self._raw_properties[property]["value"],
+                if property in self._raw_properties:
+                    properties[key] = _convert(
+                        data_type, self._raw_properties[property].get("value")
                     )
-                except KeyError:
-                    pass
+
+        try:
+            properties["firmware_update_status"] = json.loads(
+                self._raw_properties["FW_UPDATE_STATUS"]["value"]
+            )["primary"].lower()
+        except (KeyError, TypeError, ValueError, AttributeError):
+            pass
 
         if self._version == 3:
-            vitals = json.loads(
-                self._raw_properties["REAL_TIME_VITALS"]["value"],
-            )
+            try:
+                vitals = json.loads(
+                    self._raw_properties["REAL_TIME_VITALS"]["value"],
+                )
+            except (TypeError, ValueError):
+                logger.warning("Unreadable REAL_TIME_VITALS for %s", self.serial)
+                vitals = {}
 
             for data_type, vitals_list in VITALS_3.items():
                 for vital_desc, vital_key in vitals_list.items():
-                    match vital_desc:
-                        case "base_station_on":
-                            try:
-                                properties[vital_desc] = vitals["bso"]
-                            except KeyError:
-                                pass
-                        case _:
-                            try:
-                                properties[vital_desc] = data_type(
-                                    vitals[vital_key],
-                                )
-                            except KeyError:
-                                pass
+                    if vital_key not in vitals:
+                        continue
+                    if vital_desc == "base_station_on":
+                        properties[vital_desc] = vitals[vital_key]
+                    else:
+                        properties[vital_desc] = _convert(
+                            data_type, vitals[vital_key]
+                        )
 
             try:
                 properties["last_updated"] = datetime.datetime.strptime(
                     self._raw_properties["REAL_TIME_VITALS"]["data_updated_at"],
                     "%Y-%m-%dT%H:%M:%SZ",
                 ).replace(tzinfo=datetime.timezone.utc)
-            except KeyError:
+            except (KeyError, TypeError, ValueError):
                 pass
 
         if self._version == 2:
             for data_type, vitals_list in VITALS_2.items():
                 for vital_desc, vital_key in vitals_list.items():
-                    try:
-                        properties[vital_desc] = data_type(
-                            self._raw_properties[vital_key]["value"],
+                    if vital_key in self._raw_properties:
+                        properties[vital_desc] = _convert(
+                            data_type, self._raw_properties[vital_key].get("value")
                         )
-                    except KeyError:
-                        pass
 
         return properties
 

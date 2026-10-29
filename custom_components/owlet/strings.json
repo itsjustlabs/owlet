@@ -119,6 +119,9 @@
       },
       "last_updated": {
         "name": "Last updated"
+      },
+      "firmware_update_status": {
+        "name": "Firmware update status"
       }
     },
     "switch": {
