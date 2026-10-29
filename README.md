@@ -42,6 +42,8 @@ uv pip install --python .venv -r requirements_test.txt
 .venv/bin/python -m pytest
 ```
 
+Changes reach `main` only through pull requests. To release, bump `version` in `custom_components/owlet/manifest.json` and add a matching `## <version>` section to `CHANGELOG.md` in the same pull request. When it merges, the Release workflow runs the tests, tags the version, and publishes `owlet.zip` with that changelog section as the notes. Merges that don't change the version publish nothing.
+
 ## Options
 
 - Seconds between polling - Number of seconds between each call for data from the owlet cloud service, default is 5 seconds.
