@@ -1,6 +1,22 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## 2026.10.2 (2026-10-29)
+Most of these are ported from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet).
+### Feature
+* "Minutes before readings count as stale" option, 0–120 with a default of 2. Setting it to 0 turns stale detection off. ([#13](https://github.com/itsjustlabs/owlet/pull/13))
+* Smart Sock 2 now gets Last updated, Readings stale and the stale Repairs warning. The sock counts as live while heart rate or oxygen is still updating. ([#13](https://github.com/itsjustlabs/owlet/pull/13))
+* Reconfigure, to change the region or log in again without removing the integration. The region is now a labelled Europe/World dropdown, and the re-login dialogs name the account. ([#14](https://github.com/itsjustlabs/owlet/pull/14))
+* Icons moved to `icons.json`. Awake, Sleep state and Monitoring state icons now change with the state. ([#15](https://github.com/itsjustlabs/owlet/pull/15))
+* Blueprints for alert notifications (optionally critical) and for readings-stale notifications, with import buttons in the README. ([#16](https://github.com/itsjustlabs/owlet/pull/16))
+* A ready-made dashboard in `dashboards/owlet.yaml`, built only from Home Assistant's own cards. ([#17](https://github.com/itsjustlabs/owlet/pull/17))
+### Fix
+* The device shows the hardware version the sock reports, instead of a hard-coded `3r8`, and its serial number. Socks without a MAC address no longer get an empty one. ([#12](https://github.com/itsjustlabs/owlet/pull/12))
+* The base station switch shows an error when Owlet doesn't accept a command, instead of failing silently. ([#12](https://github.com/itsjustlabs/owlet/pull/12))
+* Signal strength and Readings stale are diagnostic entities. ([#12](https://github.com/itsjustlabs/owlet/pull/12))
+* Setup retries when Owlet returns no socks, instead of giving up until the integration is reloaded. ([#12](https://github.com/itsjustlabs/owlet/pull/12))
+* Removed the Ukrainian translation, which was the English text. Ukrainian users see English, as before. ([#12](https://github.com/itsjustlabs/owlet/pull/12))
+
 ## 2026.10.1 (2026-10-29)
 ### Feature
 * "Monitoring state" sensor that sums up the sock in one value: `monitoring`, `low_signal`, `base_station_off`, `stale`, `charging` or `charged`. ([#5](https://github.com/itsjustlabs/owlet/pull/5))
