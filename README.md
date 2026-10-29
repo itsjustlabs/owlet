@@ -37,6 +37,17 @@ This integration provides the following entities:
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
 - Firmware update status (diagnostic).
 
+## Blueprints
+
+Ready-made automations that notify a phone with the Home Assistant Companion app. Adapted from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet).
+
+| Blueprint | What it does | Import |
+| --- | --- | --- |
+| Owlet alert notification | Notifies when any of the Owlet alerts you pick turns on. Optionally sends it as a critical notification, which sounds even on silent or do not disturb. | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fitsjustlabs%2Fowlet%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fowlet%2Fowlet_alert_notification.yaml) |
+| Owlet readings stale notification | Notifies when a sock's Readings stale sensor turns on, after an optional extra delay, and optionally again when readings come back. | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fitsjustlabs%2Fowlet%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fowlet%2Fowlet_stale_data_notification.yaml) |
+
+Like the integration, these depend on polling Owlet's cloud and can be late. Keep the Owlet base station and app as your alarm.
+
 ## Development
 
 ```bash
