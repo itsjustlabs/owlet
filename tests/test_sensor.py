@@ -112,7 +112,7 @@ async def test_sensors_charging(hass: HomeAssistant) -> None:
 async def test_sensors_v2(hass: HomeAssistant) -> None:
     """Test sensor values."""
     await async_init_integration(hass, properties_fixture="update_properties_v2.json")
-    assert len(hass.states.async_all("sensor")) == 5
+    assert len(hass.states.async_all("sensor")) == 6
 
     assert (
         hass.states.get("sensor.owlet_sock_serial_number_battery_percentage").state == "29"

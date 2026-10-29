@@ -32,7 +32,11 @@
             "init": {
                 "title": "Configurer les options pour Owlet",
                 "data": {
-                    "pollinterval": "Intervalle de sondage en secondes, minimum 10"
+                    "pollinterval": "Intervalle de sondage en secondes, minimum 10",
+                    "stale_threshold": "Minutes avant que les mesures soient considérées comme figées (0 pour désactiver)"
+                },
+                "data_description": {
+                    "stale_threshold": "La fréquence cardiaque, l'oxygène et les autres mesures en direct deviennent indisponibles, et le capteur « Readings stale » s'active, quand la chaussette n'a rien envoyé depuis ce délai. Par défaut 2."
                 }
             }
         }
