@@ -5,6 +5,7 @@ from http import HTTPStatus
 import time
 
 from aiohttp import ClientConnectionError
+from freezegun.api import FrozenDateTimeFactory
 import pytest
 from pytest_homeassistant_custom_component.test_util.aiohttp import (
     AiohttpClientMocker,
@@ -16,6 +17,7 @@ from custom_components.owlet.pyowletapi.const import REGION_INFO
 from custom_components.owlet.pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
+    OwletRateLimitError,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -135,3 +137,90 @@ async def test_network_error_during_login_is_connection_error(
 
     with pytest.raises(OwletConnectionError):
         await _api(hass, time.time() - 1).authenticate()
+
+
+async def test_retry_after_pauses_requests(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """A 429 with Retry-After pauses every request until that time has passed."""
+    aioclient_mock.post(
+        ACTIVATE_URL, status=HTTPStatus.TOO_MANY_REQUESTS, headers={"Retry-After": "120"}
+    )
+    api = _api(hass, time.time() + 3600)
+
+    with pytest.raises(OwletRateLimitError) as err:
+        await api.activate("SERIAL")
+    assert err.value.retry_after == 120
+
+    freezer.tick(119)
+    with pytest.raises(OwletRateLimitError):
+        await api.activate("SERIAL")
+    assert aioclient_mock.call_count == 1
+
+    aioclient_mock.clear_requests()
+    aioclient_mock.post(ACTIVATE_URL, json={})
+    freezer.tick(2)
+    await api.activate("SERIAL")
+    assert aioclient_mock.call_count == 1
+
+
+async def test_retry_after_http_date(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """A Retry-After given as an HTTP date is turned into seconds from now."""
+    aioclient_mock.post(
+        ACTIVATE_URL,
+        status=HTTPStatus.SERVICE_UNAVAILABLE,
+        headers={"Retry-After": "Wed, 24 May 2023 14:21:00 GMT"},
+    )
+
+    with pytest.raises(OwletRateLimitError) as err:
+        await _api(hass, time.time() + 3600).activate("SERIAL")
+    assert err.value.retry_after == 300
+
+
+async def test_server_errors_back_off_exponentially(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Without Retry-After, the pause doubles on each failure and resets on success."""
+    statuses = iter(
+        [HTTPStatus.BAD_GATEWAY, HTTPStatus.BAD_GATEWAY, HTTPStatus.OK, HTTPStatus.BAD_GATEWAY]
+    )
+
+    async def activate(method, url, data):
+        return AiohttpClientMockResponse(method, url, status=next(statuses), json={})
+
+    aioclient_mock.post(ACTIVATE_URL, side_effect=activate)
+    api = _api(hass, time.time() + 3600)
+
+    waits = []
+    for _ in range(2):
+        with pytest.raises(OwletRateLimitError) as err:
+            await api.activate("SERIAL")
+        waits.append(err.value.retry_after)
+        freezer.tick(err.value.retry_after + 1)
+
+    await api.activate("SERIAL")
+
+    with pytest.raises(OwletRateLimitError) as err:
+        await api.activate("SERIAL")
+    waits.append(err.value.retry_after)
+
+    assert waits == [30, 60, 30]
+
+
+async def test_backoff_is_capped(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """A very long Retry-After is capped at 15 minutes."""
+    aioclient_mock.post(
+        ACTIVATE_URL, status=HTTPStatus.TOO_MANY_REQUESTS, headers={"Retry-After": "86400"}
+    )
+
+    with pytest.raises(OwletRateLimitError) as err:
+        await _api(hass, time.time() + 3600).activate("SERIAL")
+    assert err.value.retry_after == 900

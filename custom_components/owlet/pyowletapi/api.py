@@ -1,4 +1,5 @@
 import aiohttp
+from email.utils import parsedate_to_datetime
 import time
 import logging
 from logging import Logger
@@ -11,6 +12,7 @@ from .exceptions import (
     OwletConnectionError,
     OwletDevicesError,
     OwletError,
+    OwletRateLimitError,
 )
 from .const import REGION_INFO
 
@@ -18,6 +20,13 @@ logger: Logger = logging.getLogger(__package__)
 
 # Without a timeout a hung connection to Owlet stalls every later update.
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=20)
+
+# When Owlet rate limits or fails, pause requests instead of letting every
+# sock's poll keep hitting it. A Retry-After from Owlet sets the pause;
+# otherwise it doubles from MIN_BACKOFF up to MAX_BACKOFF.
+BACKOFF_STATUSES = (429, 500, 502, 503, 504)
+MIN_BACKOFF = 30.0
+MAX_BACKOFF = 900.0
 
 
 class SockData(TypedDict):
@@ -126,6 +135,8 @@ class OwletAPI:
         self._tokens_changed: bool = False
         self.session: aiohttp.ClientSession = session or aiohttp.ClientSession()
         self.headers: dict[str, str] = {}
+        self._backoff: float = 0.0
+        self._backoff_until: float = 0.0
 
         if self._auth_token:
             self.headers["Authorization"] = "auth_token " + self._auth_token
@@ -529,6 +540,11 @@ class OwletAPI:
         dict: Dictionary containing the response
 
         """
+        if (wait := self._backoff_until - time.monotonic()) > 0:
+            raise OwletRateLimitError(
+                f"Waiting {wait:.0f}s before calling Owlet again", retry_after=wait
+            )
+
         # Trust the stored expiry rather than probing the API before every
         # call; only log in again when the token has expired or Owlet rejects it.
         if (
@@ -539,13 +555,21 @@ class OwletAPI:
             await self._reauthenticate()
 
         try:
-            status, body = await self._send(method, url, data)
+            status, body, retry_after = await self._send(method, url, data)
             if status == 401:
                 self._auth_token = None
                 await self._reauthenticate()
-                status, body = await self._send(method, url, data)
+                status, body, retry_after = await self._send(method, url, data)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise OwletConnectionError(f"Error sending request: {err}") from err
+
+        if status in BACKOFF_STATUSES:
+            wait = self._start_backoff(retry_after)
+            raise OwletRateLimitError(
+                f"Owlet returned status {status}, retrying in {wait:.0f}s",
+                retry_after=wait,
+            )
+        self._backoff = 0.0
 
         if status == 401:
             raise OwletAuthenticationError("Owlet rejected the refreshed token")
@@ -553,6 +577,17 @@ class OwletAPI:
             raise OwletConnectionError(f"Error sending request, status {status}")
 
         return body
+
+    def _start_backoff(self, retry_after: Optional[str]) -> float:
+        """Pause requests and return how many seconds for."""
+        wait = _parse_retry_after(retry_after)
+        if wait is None:
+            self._backoff = min(max(self._backoff * 2, MIN_BACKOFF), MAX_BACKOFF)
+            wait = self._backoff
+        wait = min(max(wait, 1.0), MAX_BACKOFF)
+        self._backoff_until = time.monotonic() + wait
+        logger.warning("Owlet is limiting requests, pausing for %.0fs", wait)
+        return wait
 
     async def _reauthenticate(self) -> None:
         # token_sign_in clears _tokens_changed when it returns the new tokens;
@@ -566,13 +601,29 @@ class OwletAPI:
         method: str,
         url: str,
         data: Optional[dict[str, Any]],
-    ) -> tuple[int, Any]:
+    ) -> tuple[int, Any, Optional[str]]:
         async with self._session_request(
             method,
             self._api_url + url,
             headers=self.headers,
             json=data,
         ) as response:
+            retry_after = response.headers.get("Retry-After")
             if response.status not in (200, 201):
-                return response.status, None
-            return response.status, await response.json()
+                return response.status, None, retry_after
+            return response.status, await response.json(), retry_after
+
+
+def _parse_retry_after(value: Optional[str]) -> Optional[float]:
+    """Return a Retry-After header's delay in seconds, or None if unusable."""
+    if not value:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        pass
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    return retry_at.timestamp() - time.time()
