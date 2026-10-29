@@ -1,0 +1,75 @@
+name: Release
+
+# Publishes a release whenever a merge to main carries a manifest version
+# that has not been tagged yet. Merges that leave the version alone do nothing.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: "Tag and release"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          version=$(jq -r .version custom_components/owlet/manifest.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $version already exists; nothing to release."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tests
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          pip install -r requirements_test.txt
+          python -m pytest -q
+
+      - name: Build owlet.zip
+        if: steps.version.outputs.exists == 'false'
+        # HACS unpacks the zip straight into custom_components/owlet.
+        run: |
+          cd custom_components/owlet
+          zip -r "$GITHUB_WORKSPACE/owlet.zip" . -x '*__pycache__*'
+
+      - name: Extract release notes
+        if: steps.version.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            $0 ~ "^## " v "( |$)" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "CHANGELOG.md has no '## $VERSION' section" >&2
+            exit 1
+          fi
+
+      - name: Tag and publish
+        if: steps.version.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" owlet.zip \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file notes.md
