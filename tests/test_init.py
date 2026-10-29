@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 import json
+
+import pytest
 from unittest.mock import patch
 
 from custom_components.owlet.pyowletapi.exceptions import (
@@ -167,3 +169,39 @@ async def test_options_update_reloads_entry(hass: HomeAssistant) -> None:
     assert entry.state == ConfigEntryState.LOADED
     coordinator = entry.runtime_data["SERIAL_NUMBER"]
     assert coordinator.update_interval == timedelta(seconds=30)
+
+
+@pytest.mark.parametrize(
+    ("old_title", "new_title"),
+    [
+        ("sample@gmail.com", "Owlet"),
+        ("Sample@Gmail.com", "Owlet"),
+        ("Nursery", "Nursery"),
+    ],
+)
+async def test_migrate_email_title(
+    hass: HomeAssistant, old_title: str, new_title: str
+) -> None:
+    """Test 1.1 entries titled with the email are renamed, and custom titles kept."""
+    entry = await async_init_integration(hass, title=old_title)
+
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.title == new_title
+    assert entry.minor_version == 2
+
+
+async def test_auth_error_does_not_log_email(
+    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test a failed login doesn't put the account email in the log."""
+    entry = await async_init_integration(hass, skip_setup=True)
+
+    with patch(
+        "custom_components.owlet.OwletAPI.authenticate",
+        side_effect=OwletAuthenticationError(),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.SETUP_ERROR
+    assert "sample@gmail.com" not in caplog.text.lower()

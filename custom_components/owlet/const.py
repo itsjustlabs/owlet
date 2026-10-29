@@ -3,6 +3,8 @@
 from datetime import timedelta
 
 DOMAIN = "owlet"
+# Entry titles show up in Home Assistant's logs, so don't use the email.
+DEFAULT_TITLE = "Owlet"
 
 CONF_OWLET_EXPIRY = "expiry"
 CONF_OWLET_REFRESH = "refresh"

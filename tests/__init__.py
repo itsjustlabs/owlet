@@ -34,11 +34,12 @@ async def async_init_integration(
     skip_setup: bool = False,
     properties_fixture: str = "update_properties_charging.json",
     devices_fixture: str = "get_devices.json",
+    title: str = "sample@gmail.com",
 ) -> MockConfigEntry:
     """Set up integration entry."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="sample@gmail.com",
+        title=title,
         unique_id="sample@gmail.com",
         data={
             CONF_REGION: "europe",

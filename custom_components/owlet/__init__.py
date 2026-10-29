@@ -20,6 +20,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import (
     CONF_OWLET_EXPIRY,
     CONF_OWLET_REFRESH,
+    DEFAULT_TITLE,
     POLLING_INTERVAL,
     SUPPORTED_VERSIONS,
 )
@@ -55,14 +56,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> boo
         devices = await owlet_api.get_devices(SUPPORTED_VERSIONS)
 
     except (OwletAuthenticationError, OwletCredentialsError) as err:
-        raise ConfigEntryAuthFailed(
-            f"Credentials expired for {entry.data[CONF_USERNAME]}"
-        ) from err
+        raise ConfigEntryAuthFailed("Owlet login expired") from err
 
     except OwletConnectionError as err:
-        raise ConfigEntryNotReady(
-            f"Error connecting to {entry.data[CONF_USERNAME]}"
-        ) from err
+        raise ConfigEntryNotReady("Error connecting to Owlet") from err
 
     except OwletDevicesError:
         _LOGGER.error("No owlet devices found to set up")
@@ -93,6 +90,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> boo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate an old config entry."""
+    if entry.version > 1:
+        return False
+
+    if entry.minor_version < 2:
+        # 1.1 entries were titled with the account email. Keep a title the
+        # user chose themselves.
+        title = entry.title
+        if title.lower() == entry.data[CONF_USERNAME].lower():
+            title = DEFAULT_TITLE
+        hass.config_entries.async_update_entry(entry, title=title, minor_version=2)
 
     return True
 
