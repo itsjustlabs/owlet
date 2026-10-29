@@ -8,9 +8,12 @@
 * High, medium and low priority alarm binary sensors. These are disabled by default, because what each priority covers isn't documented. ([#4](https://github.com/itsjustlabs/owlet/pull/4))
 * "Firmware update status" diagnostic sensor with Owlet's value (`idle`, `downloading`, ...). ([#2](https://github.com/itsjustlabs/owlet/pull/2))
 * Download diagnostics from the integration's menu. Email, tokens, serial numbers, MAC addresses, the baby's name and birthdate, and location are removed. ([#3](https://github.com/itsjustlabs/owlet/pull/3))
+* A warning under Settings → System → Repairs when a sock's readings stay stale for over an hour with the base station on. It clears itself when readings return; see [ryanbdclark/owlet#31](https://github.com/ryanbdclark/owlet/issues/31). ([#11](https://github.com/itsjustlabs/owlet/pull/11))
 ### Fix
 * A null or unreadable value from Owlet no longer fails the whole poll. That one entity shows unknown and the others keep updating. ([#2](https://github.com/itsjustlabs/owlet/pull/2))
 * Corrupt live vitals are logged and skipped instead of making every entity unavailable. ([#2](https://github.com/itsjustlabs/owlet/pull/2))
+* The integration is titled "Owlet" instead of your account email, which Home Assistant writes to its logs. Existing entries titled with the email are renamed; a title you chose is kept. Login and connection errors no longer include the email. ([#9](https://github.com/itsjustlabs/owlet/pull/9))
+* When Owlet rate limits or returns a server error, requests pause for its Retry-After, or 30 seconds doubling up to 15 minutes, instead of retrying every poll. ([#10](https://github.com/itsjustlabs/owlet/pull/10))
 
 ## 2026.10.0 (2026-10-22)
 First release from itsjustlabs/owlet.
