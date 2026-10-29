@@ -29,9 +29,9 @@ The `Owlet` integration offers integration with the Owlet Smart Sock cloud servi
 
 This integration provides the following entities:
 
-- Binary sensors - charging status, high heart rate alert, low heart rate alert, high oxygen alert, low oxygen alert, low battery alert, lost power alert, sock diconnected alert, and sock status.
-- Sensors - battery level, oxygen saturation, oxygen saturation 10 minute average, heart rate, battery time remaining, signal strength, skin temperature, sleep state, and last updated.
-- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value.
+- Binary sensors - charging status, awake, sock off, high heart rate alert, low heart rate alert, high oxygen alert, low oxygen alert, critical oxygen alert, low battery alert, critical battery alert, lost power alert, and sock disconnected alert.
+- Sensors - battery level, oxygen saturation, oxygen saturation 10 minute average, heart rate, battery time remaining, signal strength, skin temperature, sleep state, last updated, and movement and movement bucket (disabled by default).
+- Readings stale - turns on when the sock's live readings are more than 2 minutes old while it is off the charger. Heart rate, oxygen and the other live readings show as unavailable while this is on, instead of repeating the last value. If readings stay stale for over an hour while the base station is on, a warning also appears under Settings → System → Repairs; it clears itself when readings return.
 - Switch - base station on/off.
 - Monitoring state - one of monitoring, low signal, base station off, readings stale, charging, or charged. Handy for a dashboard tile or a single automation trigger.
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
