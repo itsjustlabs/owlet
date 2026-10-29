@@ -37,6 +37,27 @@ This integration provides the following entities:
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
 - Firmware update status (diagnostic).
 
+## Dashboard
+
+[`dashboards/owlet.yaml`](dashboards/owlet.yaml) is a ready-made dashboard that only uses cards built into Home Assistant, adapted from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet). It has one view:
+
+- **Now:** a monitoring state tile, heart rate and O2 gauges, the 10-minute O2 average, skin temperature, sleep state, sock off, charging and the base station switch. A banner shows when readings are stale.
+- **Owlet alerts:** each alert appears only while it's on; otherwise the card says none are on.
+- **Last 12 hours:** heart rate, O2, and sleep.
+- **Trends:** daily min/mean/max of heart rate, O2 and skin temperature over 30 days.
+- **Device:** battery, signal and last reading.
+
+It's made for the Smart Sock 3. A Smart Sock 2 doesn't report skin temperature, sleep state or the 10-minute O2 average, so those cards say "Entity not available".
+
+To install it:
+
+1. **Find your prefix.** Open Settings → Devices & services → Owlet, open your sock, and click the heart rate entity, then the cog. The prefix is everything between `sensor.` and `_heart_rate`. For example, `sensor.owlet_sock_ab12cd34_heart_rate` has the prefix `owlet_sock_ab12cd34`.
+2. **Prepare the YAML.** Copy the file into a text editor and replace every `owlet_sock_serial_number` with your prefix.
+3. **Create the dashboard.** Go to Settings → Dashboards → Add dashboard → New dashboard from scratch, then open it.
+4. **Paste it.** Choose the pencil, then ⋮ → Raw configuration editor, replace everything with your YAML, and save.
+
+The entity IDs assume Home Assistant is in English. If a card says "Entity not available", check that entity's ID on the device page. With more than one sock, duplicate the view and use the other sock's prefix. The daily trends start filling in from when the integration was installed. Gauge ranges are for display only and have no medical meaning; alerts come from Owlet.
+
 ## Development
 
 ```bash
