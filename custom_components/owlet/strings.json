@@ -6,11 +6,23 @@
           "region": "Region",
           "username": "Email",
           "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "region": "Pick Europe if your Owlet account was created in the EU or UK, otherwise pick World."
         }
       },
       "reauth_confirm": {
         "title": "Reauthentication required for Owlet",
         "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "description": "The Owlet login for {username} is no longer valid. Enter the password again."
+      },
+      "reconfigure": {
+        "title": "Reconfigure Owlet",
+        "description": "Change the region or log in again for {username}.",
+        "data": {
+          "region": "Region",
           "password": "[%key:common::config_flow::data::password%]"
         }
       }
@@ -25,7 +37,8 @@
     },
     "abort": {
       "already_configured": "Device already configured",
-      "reauth_successful": "Reauthentication successful"
+      "reauth_successful": "Reauthentication successful",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "options": {
@@ -33,7 +46,11 @@
       "init": {
         "title": "Configure options for Owlet",
         "data": {
-          "scan_interval": "Polling interval in seconds (minimum 5)"
+          "scan_interval": "Polling interval in seconds (minimum 5)",
+          "stale_threshold": "Minutes before readings count as stale (0 turns this off)"
+        },
+        "data_description": {
+          "stale_threshold": "Heart rate, oxygen and the other live readings show as unavailable, and Readings stale turns on, when the sock hasn't sent a reading for this long. Default 2."
         }
       }
     }
@@ -160,6 +177,19 @@
     "stale_data": {
       "title": "Owlet readings stopped updating",
       "description": "{name} has not sent a new reading since {last_updated}, although it is off the charger and the base station is on. Heart rate and oxygen show as unavailable until readings resume.\n\nRestarting the base station (unplug it for a few seconds) usually fixes this. This warning clears by itself when readings come back."
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Owlet didn't accept the command. Try again in a moment."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "europe": "Europe",
+        "world": "World"
+      }
     }
   }
 }

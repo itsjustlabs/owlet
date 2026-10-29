@@ -11,7 +11,7 @@ from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, STALE_AFTER, STALE_ISSUE_AFTER
+from .const import CONF_STALE_THRESHOLD, DOMAIN, STALE_AFTER, STALE_ISSUE_AFTER
 from .pyowletapi.exceptions import (
     OwletAuthenticationError,
     OwletConnectionError,
@@ -45,12 +45,21 @@ class OwletCoordinator(DataUpdateCoordinator[None]):
     @property
     def vitals_stale(self) -> bool:
         """Return True when the sock's live readings have stopped updating."""
-        if self.sock.properties.get("charging"):
+        if self.sock.properties.get("charging") or not self.stale_after:
             return False
         last_updated = self.sock.properties.get("last_updated")
         return (
-            last_updated is not None and dt_util.utcnow() - last_updated > STALE_AFTER
+            last_updated is not None
+            and dt_util.utcnow() - last_updated > self.stale_after
         )
+
+    @property
+    def stale_after(self) -> timedelta:
+        """Return how old readings can get before they count as stale."""
+        minutes = self.config_entry.options.get(CONF_STALE_THRESHOLD)
+        if minutes is None:
+            return STALE_AFTER
+        return timedelta(minutes=minutes)
 
     async def _async_update_data(self) -> None:
         """Fetch the data from the device."""

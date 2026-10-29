@@ -9,6 +9,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -189,7 +190,6 @@ class OwletAwakeSensor(OwletBinarySensor):
     entity_description = OwletBinarySensorEntityDescription(
         key="sleep_state",
         translation_key="awake",
-        icon="mdi:sleep",
         available_during_charging=False,
     )
 
@@ -221,6 +221,7 @@ class OwletStaleDataSensor(OwletBinarySensor):
         key="stale_data",
         translation_key="stale_data",
         device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
         available_during_charging=True,
     )
 

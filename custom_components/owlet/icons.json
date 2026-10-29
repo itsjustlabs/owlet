@@ -1,0 +1,56 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "awake": {
+        "default": "mdi:sleep-off",
+        "state": {
+          "off": "mdi:sleep"
+        }
+      }
+    },
+    "sensor": {
+      "heartrate": {
+        "default": "mdi:heart-pulse"
+      },
+      "o2saturation": {
+        "default": "mdi:leaf"
+      },
+      "o2saturation10a": {
+        "default": "mdi:leaf"
+      },
+      "movement": {
+        "default": "mdi:cursor-move"
+      },
+      "movementbucket": {
+        "default": "mdi:bucket-outline"
+      },
+      "firmware_update_status": {
+        "default": "mdi:update"
+      },
+      "last_updated": {
+        "default": "mdi:clock-check-outline"
+      },
+      "sleepstate": {
+        "default": "mdi:sleep",
+        "state": {
+          "awake": "mdi:sleep-off"
+        }
+      },
+      "monitoring_state": {
+        "default": "mdi:baby-face-outline",
+        "state": {
+          "low_signal": "mdi:signal-off",
+          "base_station_off": "mdi:power-plug-off-outline",
+          "stale": "mdi:clock-alert-outline",
+          "charging": "mdi:battery-charging",
+          "charged": "mdi:battery"
+        }
+      }
+    },
+    "switch": {
+      "base_on": {
+        "default": "mdi:router-wireless"
+      }
+    }
+  }
+}
