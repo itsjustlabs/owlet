@@ -190,7 +190,6 @@ class OwletAwakeSensor(OwletBinarySensor):
     entity_description = OwletBinarySensorEntityDescription(
         key="sleep_state",
         translation_key="awake",
-        icon="mdi:sleep",
         available_during_charging=False,
     )
 
