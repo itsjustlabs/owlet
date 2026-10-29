@@ -1,14 +1,28 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## 2026.10.1 (2026-10-29)
+### Feature
+* "Monitoring state" sensor that sums up the sock in one value: `monitoring`, `low_signal`, `base_station_off`, `stale`, `charging` or `charged`. ([#5](https://github.com/itsjustlabs/owlet/pull/5))
+* "Low signal" binary sensor, on when the sock is on but can't get a reading (the app's yellow notification), and a "Discomfort alert" binary sensor. ([#4](https://github.com/itsjustlabs/owlet/pull/4))
+* High, medium and low priority alarm binary sensors. These are disabled by default, because what each priority covers isn't documented. ([#4](https://github.com/itsjustlabs/owlet/pull/4))
+* "Firmware update status" diagnostic sensor with Owlet's value (`idle`, `downloading`, ...). ([#2](https://github.com/itsjustlabs/owlet/pull/2))
+* Download diagnostics from the integration's menu. Email, tokens, serial numbers, MAC addresses, the baby's name and birthdate, and location are removed. ([#3](https://github.com/itsjustlabs/owlet/pull/3))
+* A warning under Settings → System → Repairs when a sock's readings stay stale for over an hour with the base station on. It clears itself when readings return; see [ryanbdclark/owlet#31](https://github.com/ryanbdclark/owlet/issues/31). ([#11](https://github.com/itsjustlabs/owlet/pull/11))
+### Fix
+* A null or unreadable value from Owlet no longer fails the whole poll. That one entity shows unknown and the others keep updating. ([#2](https://github.com/itsjustlabs/owlet/pull/2))
+* Corrupt live vitals are logged and skipped instead of making every entity unavailable. ([#2](https://github.com/itsjustlabs/owlet/pull/2))
+* The integration is titled "Owlet" instead of your account email, which Home Assistant writes to its logs. Existing entries titled with the email are renamed; a title you chose is kept. Login and connection errors no longer include the email. ([#9](https://github.com/itsjustlabs/owlet/pull/9))
+* When Owlet rate limits or returns a server error, requests pause for its Retry-After, or 30 seconds doubling up to 15 minutes, instead of retrying every poll. ([#10](https://github.com/itsjustlabs/owlet/pull/10))
+
 ## 2026.10.0 (2026-10-22)
 First release from itsjustlabs/owlet.
 ### Feature
-* "Readings stale" binary sensor and "Last updated" sensor. Live vitals show as unavailable instead of repeating frozen values when the base station stops relaying data.
+* "Readings stale" binary sensor and "Last updated" sensor. Live vitals show as unavailable instead of repeating frozen values when the base station stops relaying data. Reported in [ryanbdclark/owlet#31](https://github.com/ryanbdclark/owlet/issues/31).
 * pyowletapi is bundled in the integration.
 ### Fix
-* Setup screen failed with "Invalid handler specified" because of exceptions removed from pyowletapi.
-* Options flow works on Home Assistant 2025.12 and later; changing the scan interval no longer needs a restart.
+* Setup screen failed with "Invalid handler specified" because of exceptions removed from pyowletapi. Fixes [ryanbdclark/owlet#29](https://github.com/ryanbdclark/owlet/issues/29).
+* Options flow works on Home Assistant 2025.12 and later; changing the scan interval no longer needs a restart. Fixes [ryanbdclark/owlet#27](https://github.com/ryanbdclark/owlet/issues/27).
 * An expired login now opens the re-login prompt instead of failing with a KeyError.
 * Each poll makes 2 requests instead of 4. Tokens are refreshed only when expired or rejected.
 * Requests time out after 20 seconds, and network errors are retried instead of failing setup.
