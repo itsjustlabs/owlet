@@ -1,6 +1,17 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## 2026.10.1 (2026-10-29)
+### Feature
+* "Monitoring state" sensor that sums up the sock in one value: `monitoring`, `low_signal`, `base_station_off`, `stale`, `charging` or `charged`.
+* "Low signal" binary sensor, on when the sock is on but can't get a reading (the app's yellow notification), and a "Discomfort alert" binary sensor.
+* High, medium and low priority alarm binary sensors. These are disabled by default, because what each priority covers isn't documented.
+* "Firmware update status" diagnostic sensor with Owlet's value (`idle`, `downloading`, ...).
+* Download diagnostics from the integration's menu. Email, tokens, serial numbers, MAC addresses, the baby's name and birthdate, and location are removed.
+### Fix
+* A null or unreadable value from Owlet no longer fails the whole poll. That one entity shows unknown and the others keep updating.
+* Corrupt live vitals are logged and skipped instead of making every entity unavailable.
+
 ## 2026.10.0 (2026-10-22)
 First release from itsjustlabs/owlet.
 ### Feature
