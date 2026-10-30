@@ -46,7 +46,16 @@ This integration provides the following entities:
 
 ## Dashboard
 
-[`dashboards/owlet.yaml`](dashboards/owlet.yaml) is a ready-made dashboard that only uses cards built into Home Assistant, adapted from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet). It has one view:
+[`dashboards/owlet.yaml`](dashboards/owlet.yaml) is a ready-made dashboard that only uses cards built into Home Assistant, adapted from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet). It has two views.
+
+**Tonight** is laid out like the Owlet app's home screen:
+
+- A headline such as "Baby is in light sleep" and how long the session has run, or what the sock is doing when it isn't monitoring, such as charging and its battery level. To use your baby's name, change `'Baby'` at the top of the first card.
+- Live health readings: pulse rate, oxygen, sleep state and skin temperature, plus any Owlet alert that is on. They show only while the sock is monitoring, so nothing reads "unavailable" between sessions.
+- Sleep summary: time asleep, wakings, and awake, light and deep sleep time for the current or last session, with a 12-hour sleep timeline.
+- The sock: base station switch, status, battery remaining and signal.
+
+**Details** has everything else:
 
 - **Now:** a monitoring state tile, heart rate and O2 gauges, the 10-minute O2 average, skin temperature, sleep state, sock off, charging and the base station switch. A banner shows when readings are stale.
 - **Owlet alerts:** each alert appears only while it's on; otherwise the card says none are on.
@@ -54,7 +63,7 @@ This integration provides the following entities:
 - **Trends:** daily min/mean/max of heart rate, O2 and skin temperature over 30 days.
 - **Device:** battery, signal and last reading.
 
-It's made for the Smart Sock 3. A Smart Sock 2 doesn't report skin temperature, sleep state or the 10-minute O2 average, so those cards say "Entity not available".
+It's made for the Smart Sock 3. A Smart Sock 2 doesn't report skin temperature, sleep state, sleep sessions or the 10-minute O2 average, so those cards say "Entity not available".
 
 To install it:
 
