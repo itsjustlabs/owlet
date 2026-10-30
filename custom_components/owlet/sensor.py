@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -25,6 +26,7 @@ from homeassistant.helpers.typing import StateType
 from .const import MONITORING_STATES, SLEEP_STATES
 from .coordinator import OwletConfigEntry, OwletCoordinator
 from .entity import OwletBaseEntity
+from .session import SleepSession
 
 
 @dataclass(kw_only=True)
@@ -112,6 +114,65 @@ SENSORS: tuple[OwletSensorEntityDescription, ...] = (
 )
 
 
+
+@dataclass(kw_only=True)
+class OwletSessionSensorEntityDescription(SensorEntityDescription):
+    """Represent a sensor for the sock's sleep session."""
+
+    value_fn: Callable[[SleepSession], StateType | datetime]
+
+
+SESSION_SENSORS: tuple[OwletSessionSensorEntityDescription, ...] = (
+    OwletSessionSensorEntityDescription(
+        key="session_started",
+        translation_key="session_started",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda session: session.started,
+    ),
+    OwletSessionSensorEntityDescription(
+        key="session_ended",
+        translation_key="session_ended",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda session: session.ended,
+    ),
+    OwletSessionSensorEntityDescription(
+        key="time_asleep",
+        translation_key="time_asleep",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        value_fn=lambda session: session.minutes("light_sleep", "deep_sleep"),
+    ),
+    OwletSessionSensorEntityDescription(
+        key="time_awake",
+        translation_key="time_awake",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        value_fn=lambda session: session.minutes("awake"),
+    ),
+    OwletSessionSensorEntityDescription(
+        key="light_sleep_time",
+        translation_key="light_sleep_time",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        value_fn=lambda session: session.minutes("light_sleep"),
+    ),
+    OwletSessionSensorEntityDescription(
+        key="deep_sleep_time",
+        translation_key="deep_sleep_time",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        value_fn=lambda session: session.minutes("deep_sleep"),
+    ),
+    OwletSessionSensorEntityDescription(
+        key="wakings",
+        translation_key="wakings",
+        value_fn=lambda session: (
+            session.wakings if session.started is not None else None
+        ),
+    ),
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: OwletConfigEntry,
@@ -139,6 +200,11 @@ async def async_setup_entry(
             sensors.append(OwletOxygenAverageSensor(coordinator))
         if "charging" in coordinator.sock.properties:
             sensors.append(OwletMonitoringStateSensor(coordinator))
+        if "sleep_state" in coordinator.sock.properties:
+            sensors.extend(
+                OwletSessionSensor(coordinator, description)
+                for description in SESSION_SENSORS
+            )
 
     async_add_entities(sensors)
 
@@ -268,3 +334,24 @@ class OwletMonitoringStateSensor(OwletSensor):
         if low_signal:
             return "low_signal"
         return "monitoring"
+
+
+class OwletSessionSensor(OwletBaseEntity, SensorEntity):
+    """A total for the sock's current or most recent sleep session."""
+
+    entity_description: OwletSessionSensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: OwletCoordinator,
+        description: OwletSessionSensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._attr_unique_id = f"{self.sock.serial}-{description.key}"
+
+    @property
+    def native_value(self) -> StateType | datetime:
+        """Return the session value."""
+        return self.entity_description.value_fn(self.coordinator.session)

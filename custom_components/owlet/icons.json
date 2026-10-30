@@ -6,6 +6,12 @@
         "state": {
           "off": "mdi:sleep"
         }
+      },
+      "sleep_session": {
+        "default": "mdi:bed",
+        "state": {
+          "off": "mdi:bed-empty"
+        }
       }
     },
     "sensor": {
@@ -45,6 +51,27 @@
           "charging": "mdi:battery-charging",
           "charged": "mdi:battery"
         }
+      },
+      "session_started": {
+        "default": "mdi:clock-start"
+      },
+      "session_ended": {
+        "default": "mdi:clock-end"
+      },
+      "time_asleep": {
+        "default": "mdi:sleep"
+      },
+      "time_awake": {
+        "default": "mdi:sleep-off"
+      },
+      "light_sleep_time": {
+        "default": "mdi:weather-night-partly-cloudy"
+      },
+      "deep_sleep_time": {
+        "default": "mdi:weather-night"
+      },
+      "wakings": {
+        "default": "mdi:eye-outline"
       }
     },
     "switch": {
