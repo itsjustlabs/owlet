@@ -152,6 +152,8 @@ async def async_setup_entry(
             sensors.append(OwletAwakeSensor(coordinator))
         if "last_updated" in coordinator.sock.properties:
             sensors.append(OwletStaleDataSensor(coordinator))
+        if "sleep_state" in coordinator.sock.properties:
+            sensors.append(OwletSleepSessionSensor(coordinator))
 
     async_add_entities(sensors)
 
@@ -236,3 +238,19 @@ class OwletStaleDataSensor(OwletBinarySensor):
     def is_on(self) -> bool:
         """Return true if the readings are stale."""
         return self.coordinator.vitals_stale
+
+
+class OwletSleepSessionSensor(OwletBaseEntity, BinarySensorEntity):
+    """On while a sleep session is in progress."""
+
+    _attr_translation_key = "sleep_session"
+
+    def __init__(self, coordinator: OwletCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self.sock.serial}-sleep_session"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true while a session is in progress."""
+        return self.coordinator.session.active
