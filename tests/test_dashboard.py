@@ -10,13 +10,14 @@ import pytest
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.template import Template
 from homeassistant.util.yaml import load_yaml_dict
 
 from . import async_init_integration
 
 DASHBOARD = Path(__file__).parent.parent / "dashboards" / "owlet.yaml"
 ENTITY_ID = re.compile(r"^(sensor|binary_sensor|switch)\.[a-z0-9_]+$")
-TEMPLATE_ENTITY_ID = re.compile(r"states\('([^']+)'\)")
+TEMPLATE_ENTITY_ID = re.compile(r"'((?:sensor|binary_sensor|switch)\.[a-z0-9_]+)'")
 # The prefix users replace; it matches the test sock's entity IDs.
 PLACEHOLDER = "owlet_sock_serial_number"
 # Only created on socks that report them; their cards stay hidden otherwise.
@@ -69,3 +70,35 @@ async def test_dashboard_entities_exist(
         entry = registry.async_get(entity_id)
         assert entry is not None, f"{entity_id} does not exist"
         assert not entry.disabled, f"{entity_id} is disabled by default"
+
+
+def _markdown(node: Any) -> Iterator[str]:
+    """Yield the content of every markdown card."""
+    if isinstance(node, dict):
+        if node.get("type") == "markdown":
+            yield node["content"]
+        for value in node.values():
+            yield from _markdown(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _markdown(value)
+
+
+@pytest.mark.parametrize(
+    "properties_fixture",
+    [
+        "update_properties_asleep.json",
+        "update_properties_awake.json",
+        "update_properties_charging.json",
+        "update_properties_v2.json",
+    ],
+)
+async def test_dashboard_templates_render(
+    hass: HomeAssistant, properties_fixture: str
+) -> None:
+    """Every markdown template renders, with or without a session."""
+    await async_init_integration(hass, properties_fixture=properties_fixture)
+
+    for content in _markdown(load_yaml_dict(DASHBOARD)):
+        rendered = Template(content, hass).async_render(parse_result=False)
+        assert "unknown" not in rendered.lower() or "unknown" in content, rendered

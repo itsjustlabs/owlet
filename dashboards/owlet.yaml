@@ -2,7 +2,7 @@
 # Adapted from LucasVollebergh/owlet (Apache-2.0).
 #
 # Uses built-in cards only, no custom cards needed. Made for the Smart Sock 3;
-# a Smart Sock 2 doesn't report skin temperature, sleep state or the 10 minute
+# a Smart Sock 2 doesn't report skin temperature, sleep state, sleep sessions or the 10 minute
 # oxygen average, so those cards show "Entity not available".
 #
 # Install (details in the README):
@@ -16,7 +16,154 @@
 # your alarm.
 title: Owlet
 views:
-  - title: Owlet
+  # Laid out like the Owlet app's home screen. Live readings only show while
+  # the sock is monitoring, so nothing shows "unavailable" between sessions.
+  - title: Tonight
+    path: tonight
+    icon: mdi:weather-night
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            text_only: true
+            content: |
+              {# Change the name to your baby's. #}
+              {% set name = 'Baby' %}
+              {% set sleep = states('sensor.owlet_sock_serial_number_sleep_state') %}
+              {% set started = as_datetime(states('sensor.owlet_sock_serial_number_session_started'), none) %}
+              {% if is_state('sensor.owlet_sock_serial_number_monitoring_state', 'monitoring') %}
+              ## {{ name }} is {{ {'awake': 'awake', 'light_sleep': 'in light sleep',
+              'deep_sleep': 'in deep sleep'}.get(sleep, 'being monitored') }}
+              {% else %}
+              ## {{ state_translated('sensor.owlet_sock_serial_number_monitoring_state') }}
+              {% endif %}
+              {% if is_state('binary_sensor.owlet_sock_serial_number_sleep_session', 'on') and started %}
+              {% set m = ((now() - started).total_seconds() // 60) | int %}
+              Monitoring: {{ m // 60 ~ 'h ' if m >= 60 else '' }}{{ m % 60 }}m
+              {% elif is_state('binary_sensor.owlet_sock_serial_number_charging', 'on') %}
+              Sock battery {{ states('sensor.owlet_sock_serial_number_battery_percentage') | int(0) }}%
+              {% endif %}
+            grid_options:
+              columns: full
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Live health readings
+            icon: mdi:heart-pulse
+          - type: markdown
+            text_only: true
+            content: |
+              {% set alerts = [
+                'binary_sensor.owlet_sock_serial_number_critical_oxygen_alert',
+                'binary_sensor.owlet_sock_serial_number_low_oxygen_alert',
+                'binary_sensor.owlet_sock_serial_number_high_oxygen_alert',
+                'binary_sensor.owlet_sock_serial_number_high_heart_rate_alert',
+                'binary_sensor.owlet_sock_serial_number_low_heart_rate_alert',
+                'binary_sensor.owlet_sock_serial_number_discomfort_alert',
+                'binary_sensor.owlet_sock_serial_number_sock_disconnected_alert',
+                'binary_sensor.owlet_sock_serial_number_lost_power_alert',
+                'binary_sensor.owlet_sock_serial_number_low_battery_alert',
+                'binary_sensor.owlet_sock_serial_number_critical_battery_alert',
+              ] | select('is_state', 'on') | map('state_attr', 'friendly_name') | list %}
+              {{ 'Owlet alert: ' ~ alerts | join(', ') if alerts else 'No Owlet alerts are on.' }}
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state: monitoring
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_heart_rate
+            name: Pulse rate
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state: monitoring
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_o2_saturation
+            name: Oxygen
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state: monitoring
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_sleep_state
+            name: Sleep
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state: monitoring
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_skin_temperature
+            name: Skin temperature
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state: monitoring
+          - type: markdown
+            text_only: true
+            content: |
+              Not monitoring right now:
+              {{ state_translated('sensor.owlet_sock_serial_number_monitoring_state') | lower }}.
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_monitoring_state
+                state_not: monitoring
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sleep summary
+            icon: mdi:sleep
+          - type: markdown
+            content: |
+              {% macro hm(minutes) %}{% set m = minutes | int(0) %}{{ m // 60 ~ 'h ' if m >= 60 else '' }}{{ m % 60 }}m{% endmacro %}
+              {% set started = as_datetime(states('sensor.owlet_sock_serial_number_session_started'), none) %}
+              {% set ended = as_datetime(states('sensor.owlet_sock_serial_number_session_ended'), none) %}
+              {% if started %}
+              **{{ 'Session in progress' if is_state('binary_sensor.owlet_sock_serial_number_sleep_session', 'on') else 'Last session' }}**,
+              {{ as_local(started).strftime('%H:%M') }} – {{ as_local(ended).strftime('%H:%M') if ended else 'now' }}
+
+              | Time asleep | Wakings |
+              | :-- | :-- |
+              | **{{ hm(states('sensor.owlet_sock_serial_number_time_asleep')) }}** | **{{ states('sensor.owlet_sock_serial_number_wakings') }}** |
+
+              | Awake | Light | Deep |
+              | :-- | :-- | :-- |
+              | {{ hm(states('sensor.owlet_sock_serial_number_time_awake')) }} | {{ hm(states('sensor.owlet_sock_serial_number_light_sleep_time')) }} | {{ hm(states('sensor.owlet_sock_serial_number_deep_sleep_time')) }} |
+              {% else %}
+              No sleep session yet. One starts when the sock begins reporting
+              sleep.
+              {% endif %}
+          - type: history-graph
+            title: Sleep cycle
+            hours_to_show: 12
+            entities:
+              - entity: sensor.owlet_sock_serial_number_sleep_state
+                name: Sleep state
+            grid_options:
+              columns: full
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Dream Sock
+            icon: mdi:sock
+          - type: tile
+            entity: switch.owlet_sock_serial_number_base_station_on
+            name: Base station
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_monitoring_state
+            name: Status
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_battery_remaining
+            name: Sock battery
+          - type: tile
+            entity: sensor.owlet_sock_serial_number_signal_strength
+            name: Signal
+
+  - title: Details
     path: owlet
     icon: mdi:baby-face-outline
     type: sections
@@ -48,12 +195,20 @@ views:
             min: 40
             max: 220
             needle: true
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_heart_rate
+                state_not: unavailable
           - type: gauge
             entity: sensor.owlet_sock_serial_number_o2_saturation
             name: O2 saturation
             min: 70
             max: 100
             needle: true
+            visibility:
+              - condition: state
+                entity: sensor.owlet_sock_serial_number_o2_saturation
+                state_not: unavailable
           - type: tile
             entity: sensor.owlet_sock_serial_number_o2_saturation_10_minute_average
             name: O2 10 min average
