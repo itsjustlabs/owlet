@@ -1,6 +1,13 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## 2026.11.0 (2026-11-02)
+### Feature
+* Sleep sessions for the Smart Sock 3, tracked from the sock's sleep state because Owlet's own sessions aren't in its API. New entities: Sleep session, Session started, Session ended, Time asleep, Time awake, Light sleep time, Deep sleep time and Wakings. Totals are kept across restarts. ([#19](https://github.com/itsjustlabs/owlet/pull/19))
+* A **Tonight** dashboard view laid out like the Owlet app: a sleep headline with session length, live readings that only show while the sock is monitoring, and a sleep summary. The original view is now **Details**, and its gauges hide instead of erroring while there's no reading. ([#20](https://github.com/itsjustlabs/owlet/pull/20))
+### Fix
+* Refreshing the Owlet login token no longer reloads the whole integration. Only changing its options does. ([#19](https://github.com/itsjustlabs/owlet/pull/19))
+
 ## 2026.10.2 (2026-10-29)
 Most of these are ported from [LucasVollebergh/owlet](https://github.com/LucasVollebergh/owlet).
 ### Feature
