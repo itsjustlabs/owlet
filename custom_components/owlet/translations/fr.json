@@ -91,6 +91,9 @@
             },
             "awake": {
                 "name": "Réveillé"
+            },
+            "sleep_session": {
+                "name": "Session de sommeil"
             }
         },
         "sensor": {
@@ -129,6 +132,27 @@
             },
             "movementbucket": {
                 "name": "Seuil de mouvement"
+            },
+            "session_started": {
+                "name": "Début de la session"
+            },
+            "session_ended": {
+                "name": "Fin de la session"
+            },
+            "time_asleep": {
+                "name": "Temps de sommeil"
+            },
+            "time_awake": {
+                "name": "Temps éveillé"
+            },
+            "light_sleep_time": {
+                "name": "Temps de sommeil léger"
+            },
+            "deep_sleep_time": {
+                "name": "Temps de sommeil profond"
+            },
+            "wakings": {
+                "name": "Réveils"
             }
         },
         "switch": {

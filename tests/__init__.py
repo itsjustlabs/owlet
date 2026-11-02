@@ -36,10 +36,12 @@ async def async_init_integration(
     devices_fixture: str = "get_devices.json",
     title: str = "sample@gmail.com",
     options: dict | None = None,
+    entry_id: str | None = None,
 ) -> MockConfigEntry:
     """Set up integration entry."""
     entry = MockConfigEntry(
         domain=DOMAIN,
+        entry_id=entry_id,
         title=title,
         unique_id="sample@gmail.com",
         data={

@@ -36,6 +36,13 @@ This integration provides the following entities:
 - Monitoring state - one of monitoring, low signal, base station off, readings stale, charging, or charged. Handy for a dashboard tile or a single automation trigger.
 - Low signal and discomfort alert binary sensors, plus Owlet's high/medium/low priority alarm flags (disabled by default).
 - Firmware update status (diagnostic).
+- Sleep session - Smart Sock 3 only. Owlet's own sleep sessions aren't in the API this integration uses, so it tracks them itself:
+  - **Sleep session** is on while a session is in progress.
+  - **Session started** and **Session ended** give the times. Session ended is unknown while the session is still running.
+  - **Time asleep**, **Time awake**, **Light sleep time** and **Deep sleep time** are in minutes.
+  - **Wakings** counts the times the baby woke for at least 2 minutes after falling asleep.
+
+  A session starts when the sock begins reporting a sleep state. It ends when the sock goes on the charger, or after 30 minutes without live readings. The totals stay until the next session starts, and are kept across restarts. Gaps of more than 5 minutes without readings don't count towards any total. These totals won't exactly match the Owlet app, which works sessions out its own way.
 
 ## Dashboard
 

@@ -12,7 +12,7 @@ async def test_sensors_asleep(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_asleep.json"
     )
 
-    assert len(hass.states.async_all("sensor")) == 11
+    assert len(hass.states.async_all("sensor")) == 18
 
     assert (
         hass.states.get("sensor.owlet_sock_serial_number_battery_percentage").state
@@ -47,7 +47,7 @@ async def test_sensors_awake(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_awake.json"
     )
 
-    assert len(hass.states.async_all("sensor")) == 11
+    assert len(hass.states.async_all("sensor")) == 18
 
     assert (
         hass.states.get("sensor.owlet_sock_serial_number_battery_percentage").state
@@ -78,7 +78,7 @@ async def test_sensors_charging(hass: HomeAssistant) -> None:
         hass, properties_fixture="update_properties_charging.json"
     )
 
-    assert len(hass.states.async_all("sensor")) == 11
+    assert len(hass.states.async_all("sensor")) == 18
 
     assert (
         hass.states.get("sensor.owlet_sock_serial_number_battery_percentage").state

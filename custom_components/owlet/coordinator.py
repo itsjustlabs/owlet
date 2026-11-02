@@ -18,6 +18,7 @@ from .pyowletapi.exceptions import (
     OwletError,
 )
 from .pyowletapi.sock import Sock
+from .session import SessionStore, SleepSession
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +31,12 @@ class OwletCoordinator(DataUpdateCoordinator[None]):
     config_entry: OwletConfigEntry
 
     def __init__(
-        self, hass: HomeAssistant, sock: Sock, interval: int, entry: OwletConfigEntry
+        self,
+        hass: HomeAssistant,
+        sock: Sock,
+        interval: int,
+        entry: OwletConfigEntry,
+        sessions: SessionStore,
     ) -> None:
         """Initialise a custom coordinator."""
         super().__init__(
@@ -41,6 +47,8 @@ class OwletCoordinator(DataUpdateCoordinator[None]):
             update_interval=timedelta(seconds=interval),
         )
         self.sock = sock
+        self._sessions = sessions
+        self.session: SleepSession = sessions.get(sock.serial)
 
     @property
     def vitals_stale(self) -> bool:
@@ -76,6 +84,21 @@ class OwletCoordinator(DataUpdateCoordinator[None]):
             raise UpdateFailed(err) from err
 
         self._async_update_stale_issue()
+        self._async_update_session()
+
+    @callback
+    def _async_update_session(self) -> None:
+        """Add this poll to the sock's sleep session."""
+        properties = self.sock.properties
+        if "sleep_state" not in properties:
+            return
+        if self.session.update(
+            dt_util.utcnow(),
+            properties["sleep_state"],
+            live=not self.vitals_stale,
+            charging=bool(properties.get("charging")),
+        ):
+            self._sessions.async_schedule_save()
 
     @property
     def stale_issue_id(self) -> str:

@@ -110,6 +110,9 @@
       },
       "low_priority_alarm": {
         "name": "Low priority alarm"
+      },
+      "sleep_session": {
+        "name": "Sleep session"
       }
     },
     "sensor": {
@@ -165,6 +168,27 @@
           "charging": "Charging",
           "charged": "Charged"
         }
+      },
+      "session_started": {
+        "name": "Session started"
+      },
+      "session_ended": {
+        "name": "Session ended"
+      },
+      "time_asleep": {
+        "name": "Time asleep"
+      },
+      "time_awake": {
+        "name": "Time awake"
+      },
+      "light_sleep_time": {
+        "name": "Light sleep time"
+      },
+      "deep_sleep_time": {
+        "name": "Deep sleep time"
+      },
+      "wakings": {
+        "name": "Wakings"
       }
     },
     "switch": {

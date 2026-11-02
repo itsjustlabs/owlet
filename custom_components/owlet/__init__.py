@@ -35,6 +35,7 @@ from .pyowletapi.exceptions import (
     OwletDevicesError,
 )
 from .pyowletapi.sock import Sock
+from .session import SessionStore
 
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH]
 
@@ -72,10 +73,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> boo
             entry, data={**entry.data, **devices["tokens"]}
         )
 
+    sessions = SessionStore(hass, entry.entry_id)
+    await sessions.async_load()
+    entry.async_on_unload(sessions.async_save)
+
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, POLLING_INTERVAL)
     coordinators = {
         device["device"]["dsn"]: OwletCoordinator(
-            hass, Sock(owlet_api, device["device"]), scan_interval, entry
+            hass, Sock(owlet_api, device["device"]), scan_interval, entry, sessions
         )
         for device in devices["response"]
     }
@@ -90,6 +95,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> boo
     entry.runtime_data = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    options = dict(entry.options)
+
+    async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Reload the entry when options such as the scan interval change."""
+        # Refreshed login tokens also update the entry, but need no reload.
+        if entry.options != options:
+            await hass.config_entries.async_reload(entry.entry_id)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
@@ -112,18 +125,14 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload the entry when options such as the scan interval change."""
-    await hass.config_entries.async_reload(entry.entry_id)
-
-
 async def async_unload_entry(hass: HomeAssistant, entry: OwletConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Clear Repairs warnings for the socks of a removed entry."""
+    """Clear Repairs warnings and stored sleep sessions of a removed entry."""
+    await SessionStore(hass, entry.entry_id).async_remove()
     for issue_id in list(ir.async_get(hass).issues):
         if issue_id[0] == DOMAIN and issue_id[1].startswith("stale_data_"):
             ir.async_delete_issue(hass, DOMAIN, issue_id[1])

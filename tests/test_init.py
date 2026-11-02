@@ -54,7 +54,7 @@ async def test_async_setup_entry(hass: HomeAssistant) -> None:
 
     entities = er.async_entries_for_device(entity_registry, device_entry.id)
 
-    assert len(entities) == 25
+    assert len(entities) == 33
 
     await hass.config_entries.async_unload(entry.entry_id)
 
@@ -170,6 +170,20 @@ async def test_options_update_reloads_entry(hass: HomeAssistant) -> None:
     assert entry.state == ConfigEntryState.LOADED
     coordinator = entry.runtime_data["SERIAL_NUMBER"]
     assert coordinator.update_interval == timedelta(seconds=30)
+
+
+async def test_new_tokens_do_not_reload_entry(hass: HomeAssistant) -> None:
+    """Saving refreshed login tokens doesn't reload the integration."""
+    entry = await async_init_integration(hass)
+    coordinator = entry.runtime_data["SERIAL_NUMBER"]
+
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_API_TOKEN: "new_token"}
+    )
+    await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.runtime_data["SERIAL_NUMBER"] is coordinator
 
 
 @pytest.mark.parametrize(
